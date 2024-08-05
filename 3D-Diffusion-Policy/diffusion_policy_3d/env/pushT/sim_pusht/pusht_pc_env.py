@@ -2,7 +2,7 @@ from gym import spaces
 import numpy as np
 import pygame
 
-from mm_lfd.envs.sim_pusht.pusht_env import PushTEnv, pymunk_to_shapely
+from diffusion_policy_3d.env.pushT.sim_pusht.pusht_env import PushTEnv, pymunk_to_shapely
 
 
 class PushTPCEnv(PushTEnv):

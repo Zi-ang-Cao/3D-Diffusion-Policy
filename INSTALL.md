@@ -9,6 +9,10 @@ cd 3D-Diffusion-Policy && pip install -e . && cd ..
 
 pip install setuptools==59.5.0 Cython==0.29.35 patchelf==0.17.2.0
 
+cd third_party
+cd Metaworld && pip install -e . && cd ..
+export MUJOCO_GL=egl
+
 pip install zarr==2.12.0 wandb ipdb gpustat dm_control omegaconf hydra-core==1.2.0 dill==0.3.5.1 einops==0.4.1 diffusers==0.11.1 numba==0.56.4 moviepy imageio av matplotlib termcolor
 ```
 

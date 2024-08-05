@@ -11,7 +11,7 @@ import shapely.geometry as sg
 import cv2
 import skimage.transform as st
 
-from mm_lfd.envs.sim_pusht.utils.pymunk_override import DrawOptions
+from diffusion_policy_3d.env.pushT.sim_pusht.utils.pymunk_override import DrawOptions
 
 
 def pymunk_to_shapely(body, shapes):

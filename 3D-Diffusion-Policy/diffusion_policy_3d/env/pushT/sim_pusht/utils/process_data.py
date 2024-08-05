@@ -5,8 +5,8 @@ import click
 from tqdm import tqdm
 from attrdict import AttrDict
 
-# from mm_lfd.envs.sim_pusht.pusht_pc_env import PushTPCEnv
-from mm_lfd.envs.sim_pusht.pusht_dense_pc_env import PushTDensePCEnv
+# from diffusion_policy_3d.env.pushT.sim_pusht.pusht_pc_env import PushTPCEnv
+from diffusion_policy_3d.env.pushT.sim_pusht.pusht_dense_pc_env import PushTDensePCEnv
 
 
 @click.command()

@@ -3,7 +3,7 @@ import numpy as np
 import pygame
 import random
 
-from mm_lfd.envs.sim_pusht.pusht_pc_env import PushTPCEnv
+from diffusion_policy_3d.env.pushT.sim_pusht.pusht_pc_env import PushTPCEnv
 
 
 def find_and_sample_colors(image, color_values, K):
