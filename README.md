@@ -16,6 +16,9 @@
   <a href="http://hxu.rocks/">Huazhe Xu</a>
 
 
+**Robotics: Science and Systems (RSS) 2024**
+
+
 
 
 
@@ -25,13 +28,19 @@
 
 **3D Diffusion Policy (DP3)** is a universal visual imitation learning algorithm that marries 3D visual representations with diffusion policies, achieving surprising effectiveness in diverse simulated and real-world tasks, including both high-dimensional and low-dimensional control tasks, with a practical inference speed.
 
+**Applications and extensions of DP3 from the community**:
+- [arXiv 2024.07](https://arxiv.org/abs/2407.03162), *Bunny-VisionPro: Real-Time Bimanual Dexterous Teleoperation for Imitation Learning*, where DP3 shows effectiveness in bimanual long-horizon tasks.
+- [arXiv 2024.07](https://arxiv.org/abs/2407.01479), *EquiBot: SIM(3)-Equivariant Diffusion Policy for Generalizable and Data Efficient Learning*, where DP3 is able to fold clothes with high success rates. 
+- [arXiv 2024.06](https://arxiv.org/abs/2406.01586), *ManiCM: Real-time 3D Diffusion Policy via Consistency Model for Robotic Manipulation*, where DP3 is accelerated via consistency model.
+- [arXiv 2024.03](https://arxiv.org/abs/2403.20328), *Learning Visual Quadrupedal Loco-Manipulation from Demonstrations*, where DP3 is used as the high-level planner.
+
+
 
 
 
 # 📊 Benchmark of DP3
 
-**Simulation environments.** We provide dexterous manipulation environments and expert policies for `Adroit` and `DexArt` in this codebase. the 3D modality generation (depths and point clouds) has been incorporated for these environments.
-
+**Simulation environments.** We provide dexterous manipulation environments and expert policies for `Adroit`, `DexArt`, and `MetaWorld` in this codebase (3+4+50=57 tasks in total). the 3D modality generation (depths and point clouds) has been incorporated for these environments.
 
 **Real-world robot data** is also provided [here](https://drive.google.com/file/d/1G5MP6Nzykku9sDDdzy7tlRqMBnKb253O/view?usp=sharing).
 
@@ -55,7 +64,7 @@ You could generate demonstrations by yourself using our provided expert policies
 - Download Adroit RL experts from [OneDrive](https://1drv.ms/u/s!Ag5QsBIFtRnTlFWqYWtS2wMMPKNX?e=dw8hsS), unzip it, and put the `ckpts` folder under `$YOUR_REPO_PATH/third_party/VRL3/`.
 - Download DexArt assets from [Google Drive](https://drive.google.com/file/d/1JdReXZjMaqMO0HkZQ4YMiU2wTdGCgum1/view?usp=sharing) and put the `assets` folder under `$YOUR_REPO_PATH/third_party/dexart-release/`.
 
-
+**Note**: since you are generating demonstrations by yourselves, the results could be slightly different from the results reported in the paper. This is normal since the results of imitation learning highly depend on the demonstration quality. **Please re-generate demonstrations if you encounter some bad demonstrations** and **no need to open a new issue**.
 
 # 🛠️ Usage
 Scripts for generating demonstrations, training, and evaluation are all provided in the `scripts/` folder. 
@@ -82,14 +91,14 @@ For more detailed arguments, please refer to the scripts and the code. We here p
     ```bash
     bash scripts/eval_policy.sh dp3 adroit_hammer 0112 0 0
     ```
-    This will evaluate the saved DP3 policy you just trained.
+    This will evaluate the saved DP3 policy you just trained. **Note: the evaluation script is only provided for deployment/inference. For benchmarking, please use the results logged in wandb during training.**
 
 # 🤖 Real Robot
 
 **Hardware Setup**
 1. Franka Robot
 2. Allegro Hand
-3. L515 Realsense Camera
+3. **L515** Realsense Camera (**Note: using the RealSense D435 camera might lead to failure of DP3 due to the very low quality of point clouds**)
 4. Mounted connection base [[link](https://drive.google.com/file/d/1kg6yOFxVqP8azxPoXsuyig5DEQnAJjwC/view?usp=sharing)] (connect Franka with Allegro hand)
 5. Mounted finger tip [[link](https://github.com/yzqin/dexpoint-release/blob/main/assets/robot/allegro_hand_description/meshes/modified_tip.STL)]
 
@@ -101,11 +110,11 @@ For more detailed arguments, please refer to the scripts and the code. We here p
 
 
 Every collected real robot demonstration (episode length: T) is a dictionary:
-1. "point_cloud": Array of shape (T, Np, 6), Np is the number of point clouds, 6 denotes [x, y, z, r, g, b]
+1. "point_cloud": Array of shape (T, Np, 6), Np is the number of point clouds, 6 denotes [x, y, z, r, g, b]. **Note: it is highly suggested to crop out the table/background and only leave the useful point clouds in your observation, which demonstrates effectiveness in our real-world experiments.**
 2. "image": Array of shape (T, H, W, 3)
 3. "depth": Array of shape (T, H, W)
 4. "agent_pos": Array of shape (T, Nd), Nd is the action dim of the robot agent, i.e. 22 for our dexhand tasks (6d position of end effector + 16d joint position)
-5. "action": Array of shape (T, Nd), delta action of the robot agent
+5. "action": Array of shape (T, Nd). We use *relative end-effector position control* for the robot arm and *relative joint-angle position control* for the dex hand.
 
 For training and evaluation, you should process the point clouds (cropping using a bounding box and FPS downsampling) as described in the paper. We also provide an example script ([here](https://github.com/YanjieZe/3D-Diffusion-Policy/tree/master/scripts/convert_real_robot_data.py)). 
 
@@ -162,9 +171,10 @@ Contact [Yanjie Ze](https://yanjieze.com) if you have any questions or suggestio
 
 If you find our work useful, please consider citing:
 ```
-@article{Ze2024DP3,
-	title={3D Diffusion Policy},
+@inproceedings{Ze2024DP3,
+	title={3D Diffusion Policy: Generalizable Visuomotor Policy Learning via Simple 3D Representations},
 	author={Yanjie Ze and Gu Zhang and Kangning Zhang and Chenyuan Hu and Muhan Wang and Huazhe Xu},
-      	journal={arXiv preprint arXiv:2403.03954},
-  	year={2024}}
+	booktitle={Proceedings of Robotics: Science and Systems (RSS)},
+	year={2024}
+}
 ```
