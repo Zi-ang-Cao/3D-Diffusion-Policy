@@ -1,5 +1,17 @@
 # Installing Conda Environment from Zero to Hero
 
+```shell
+conda creat -n lfd_dp3 --clone lfd
+
+conda activate lfd_dp3
+
+cd 3D-Diffusion-Policy && pip install -e . && cd ..
+
+pip install setuptools==59.5.0 Cython==0.29.35 patchelf==0.17.2.0
+
+pip install zarr==2.12.0 wandb ipdb gpustat dm_control omegaconf hydra-core==1.2.0 dill==0.3.5.1 einops==0.4.1 diffusers==0.11.1 numba==0.56.4 moviepy imageio av matplotlib termcolor
+```
+
 The following guidance works well for a machine with 3090/A40/A800/A100 GPU, cuda 11.7, driver 515.65.01.
 
 First, git clone this repo and `cd` into it.
