@@ -2,7 +2,7 @@
 # bash scripts/train_policy.sh dp3 adroit_hammer 0322 0 0
 # bash scripts/train_policy.sh dp3 dexart_laptop 0322 0 0
 # bash scripts/train_policy.sh simple_dp3 adroit_hammer 0322 0 0
-# bash scripts/train_policy.sh dp3 metaworld_basketball 0602 0 0
+# bash scripts/train_policy.sh dp3 metaworld_basketball 0805 1 0
 
 
 
@@ -15,7 +15,7 @@ config_name=${alg_name}
 addition_info=${3}
 seed=${4}
 exp_name=${task_name}-${alg_name}-${addition_info}
-run_dir="data/outputs/${exp_name}_seed${seed}"
+run_dir="3D-Diffusion-Policy/logs/train/${exp_name}_seed${seed}"
 
 
 # gpu_id=$(bash scripts/find_gpu.sh)

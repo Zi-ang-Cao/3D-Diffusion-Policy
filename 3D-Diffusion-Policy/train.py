@@ -31,6 +31,7 @@ from diffusion_policy_3d.common.checkpoint_util import TopKCheckpointManager
 from diffusion_policy_3d.common.pytorch_util import dict_apply, optimizer_to
 from diffusion_policy_3d.model.diffusion.ema_model import EMAModel
 from diffusion_policy_3d.model.common.lr_scheduler import get_scheduler
+import pprint
 
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 
@@ -39,6 +40,11 @@ class TrainDP3Workspace:
     exclude_keys = tuple()
 
     def __init__(self, cfg: OmegaConf, output_dir=None):
+        for key, value in cfg.items():
+            print(f'{key} = {pprint.pformat(value, indent=4)}')
+        # input("Press Enter to continue...")
+        time.sleep(1)
+
         self.cfg = cfg
         self._output_dir = output_dir
         self._saving_thread = None
@@ -303,7 +309,13 @@ class TrainDP3Workspace:
                 step_log['test_mean_score'] = - train_loss
                 
             # checkpoint
+            save_checkpoint = False
             if (self.epoch % cfg.training.checkpoint_every) == 0 and cfg.checkpoint.save_ckpt:
+                save_checkpoint = True
+            if self.epoch <=1:
+                save_checkpoint = True
+            
+            if save_checkpoint:
                 # checkpointing
                 if cfg.checkpoint.save_last_ckpt:
                     self.save_checkpoint()
