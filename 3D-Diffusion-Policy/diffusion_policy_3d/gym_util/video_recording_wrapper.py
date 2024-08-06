@@ -19,11 +19,19 @@ class SimpleVideoRecordingWrapper(gym.Wrapper):
 
         self.step_count = 0
 
+        self.env_render_return_dict = False
+        if hasattr(env, 'name'):
+            self.env_render_return_dict = True if 'pushT' in env.name else False
+
     def reset(self, **kwargs):
         obs = super().reset(**kwargs)
         self.frames = list()
 
-        frame = self.env.render(mode=self.mode)
+        if self.env_render_return_dict:
+            render = self.env.render(mode=self.mode)
+            frame = render['images'][0] # (H, W, C)
+        else:
+            frame = self.env.render(mode=self.mode)
         assert frame.dtype == np.uint8
         self.frames.append(frame)
         
@@ -33,8 +41,12 @@ class SimpleVideoRecordingWrapper(gym.Wrapper):
     def step(self, action):
         result = super().step(action)
         self.step_count += 1
-        
-        frame = self.env.render(mode=self.mode)
+
+        if self.env_render_return_dict:
+            render = self.env.render(mode=self.mode)
+            frame = render['images'][0] # (H, W, C)
+        else:
+            frame = self.env.render(mode=self.mode)
         assert frame.dtype == np.uint8
         self.frames.append(frame)
         

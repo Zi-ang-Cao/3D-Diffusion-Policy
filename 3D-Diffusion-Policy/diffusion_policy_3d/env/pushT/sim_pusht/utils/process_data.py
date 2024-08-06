@@ -3,10 +3,24 @@ import numpy as np
 import zarr
 import click
 from tqdm import tqdm
-from attrdict import AttrDict
+from diffusion_policy_3d.env.pushT.sim_pusht.pusht_pc_env import PushTPCEnv
+# from diffusion_policy_3d.env.pushT.sim_pusht.pusht_dense_pc_env import PushTDensePCEnv
 
-# from diffusion_policy_3d.env.pushT.sim_pusht.pusht_pc_env import PushTPCEnv
-from diffusion_policy_3d.env.pushT.sim_pusht.pusht_dense_pc_env import PushTDensePCEnv
+class AttrDict(dict):
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(f"{key} not found")
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError:
+            raise AttributeError(f"{key} not found")
 
 
 @click.command()
@@ -31,10 +45,10 @@ def main(in_dir, out_dir, num_demos, obs_mode, ac_mode):
         obs_mode=obs_mode,
         ac_mode=ac_mode,
         seed=0,
-        num_points=512,
+        num_points=8,
     )
-    # env = PushTPCEnv(args)
-    env = PushTDensePCEnv(args)
+    env = PushTPCEnv(args)
+    # env = PushTDensePCEnv(args)
     env.reset()
 
     # create data dir

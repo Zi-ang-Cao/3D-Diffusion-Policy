@@ -38,7 +38,7 @@ def main(in_dir, num_demos, obs_mode, ac_mode, codebase):
         legacy=False,
         block_cog=None,
         damping=None,
-        render_size=512,
+        render_size=96,
         max_episode_length=300,
         randomize_rotation=False,
         scale_low=1.0,
@@ -48,7 +48,7 @@ def main(in_dir, num_demos, obs_mode, ac_mode, codebase):
         obs_mode=obs_mode,
         ac_mode=ac_mode,
         seed=0,
-        num_points=512,
+        num_points=8,
     )
     env = PushTPCEnv(args)
     # env = PushTDensePCEnv(args)

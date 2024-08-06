@@ -9,8 +9,9 @@ class PushTPCEnv(PushTEnv):
     name = "pushT_pc"
     metadata = {"render.modes": ["rgb_array"], "video.frames_per_second": 10}
 
-    def __init__(self, args, rng=None, rng_act=None):
+    def __init__(self, args, rng=None, rng_act=None, for_dp3_runner=False):
         self.args = args
+        self.for_dp3_runner = for_dp3_runner
 
         super().__init__(
             seed=args.seed,
@@ -53,6 +54,25 @@ class PushTPCEnv(PushTEnv):
                 shape=(9,),
                 dtype=np.float64,
             )
+        
+        # Overwrite the observation space to a Dict space
+        if self.for_dp3_runner:
+            self.observation_space = spaces.Dict({
+                'agent_pos': spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(9,),
+                    dtype=np.float32
+                ),
+                'point_cloud': spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(8, 3),
+                    dtype=np.float32
+                ),
+            })
+        
+    
 
         self.ac_mode = args.ac_mode
         if self.ac_mode == "rel":
@@ -92,10 +112,27 @@ class PushTPCEnv(PushTEnv):
             else:
                 return np.concatenate([agent_pos, goal_pos])[None]
 
+    def _get_obs_for_dp3(self):
+        pts = []
+        for shape in self.block.shapes:
+            verts = [self.block.local_to_world(v) for v in shape.get_vertices()]
+            pts += [np.array([v.x, v.y]) for v in verts]
+        pts = np.array(pts)
+        assert len(pts) == 8
+
+        obs_dict = {
+            "agent_pos": self._get_obs()[0],
+            "point_cloud": np.concatenate([pts, np.zeros_like(pts[:, [0]])], axis=-1),
+        }
+        return obs_dict
+
     def reset(self):
         obs = super().reset()
         self.render_cache = None
-        return obs
+        if self.for_dp3_runner:
+            return self._get_obs_for_dp3()
+        else:
+            return obs
 
     def step(self, action, dummy_reward=False):
         if self.ac_mode == "rel":
@@ -103,7 +140,12 @@ class PushTPCEnv(PushTEnv):
         else:
             action = action[:2]
         self.render_cache = None
-        return super().step(action, dummy_reward=dummy_reward)
+
+        obs, reward, done, info = super().step(action, dummy_reward=dummy_reward)
+        if self.for_dp3_runner:
+            return self._get_obs_for_dp3(), reward, done, info
+        else:
+            return obs, reward, done, info
 
     def render(self, mode="rgb_array"):
         assert mode == "rgb_array"

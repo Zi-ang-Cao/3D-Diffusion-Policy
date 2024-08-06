@@ -1,5 +1,7 @@
 from typing import Optional, Dict
 import os
+import time
+
 
 class TopKCheckpointManager:
     def __init__(self,
@@ -24,6 +26,11 @@ class TopKCheckpointManager:
             return None
 
         value = data[self.monitor_key]
+        
+        if "mean_traj_rewards" not in data:
+            print(f"mean_traj_rewards not found in data. Using mean_traj_rewards instead!!!!!!!!!!!!!!!!!!!!!!")
+            data["mean_traj_rewards"] = -1
+
         ckpt_path = os.path.join(
             self.save_dir, self.format_str.format(**data))
         
