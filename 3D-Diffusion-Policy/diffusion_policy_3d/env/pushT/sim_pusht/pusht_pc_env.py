@@ -6,6 +6,7 @@ from diffusion_policy_3d.env.pushT.sim_pusht.pusht_env import PushTEnv, pymunk_t
 
 
 class PushTPCEnv(PushTEnv):
+    name = "pushT_pc"
     metadata = {"render.modes": ["rgb_array"], "video.frames_per_second": 10}
 
     def __init__(self, args, rng=None, rng_act=None):
