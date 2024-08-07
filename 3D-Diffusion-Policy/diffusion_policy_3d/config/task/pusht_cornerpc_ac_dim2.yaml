@@ -11,7 +11,7 @@ shape_meta: &shape_meta
       shape: [9]
       type: low_dim
   action:
-    shape: [3]
+    shape: [2]
 
 env_runner:
   _target_: diffusion_policy_3d.env_runner.pusht_runner.PushTRunner

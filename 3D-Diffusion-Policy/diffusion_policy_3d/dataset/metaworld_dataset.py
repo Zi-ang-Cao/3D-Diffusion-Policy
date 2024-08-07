@@ -34,9 +34,9 @@ class MetaworldDataset(BaseDataset):
 
         self.sampler = SequenceSampler(
             replay_buffer=self.replay_buffer, 
-            sequence_length=horizon,
-            pad_before=pad_before, 
-            pad_after=pad_after,
+            sequence_length=horizon,    # horizon is 4
+            pad_before=pad_before,  # pad_before is 1
+            pad_after=pad_after,    # pad_after is 3
             episode_mask=train_mask)
         self.train_mask = train_mask
         self.horizon = horizon

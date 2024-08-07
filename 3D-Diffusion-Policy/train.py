@@ -314,6 +314,8 @@ class TrainDP3Workspace:
                 save_checkpoint = True
             if self.epoch <=1:
                 save_checkpoint = True
+            if self.epoch >= (cfg.training.num_epochs-1):
+                save_checkpoint = True
             
             if save_checkpoint:
                 # checkpointing
@@ -345,9 +347,15 @@ class TrainDP3Workspace:
             # end of epoch
             # log of last step is combined with validation and rollout
             wandb_run.log(step_log, step=self.global_step)
+            del step_log
+
+            if self.epoch >= (cfg.training.num_epochs-1):
+                print(f"Training finished at epoch {self.epoch}")
+                break
+            cprint(f"Epoch {self.epoch} finished", 'magenta')
+            cprint(f"Global step {self.global_step} finished", 'magenta')
             self.global_step += 1
             self.epoch += 1
-            del step_log
 
     def eval(self):
         # load the latest checkpoint
@@ -372,6 +380,8 @@ class TrainDP3Workspace:
         policy.eval()
         policy.cuda()
 
+        env_runner.for_eval = True
+
         runner_log = env_runner.run(policy)
         
       
@@ -379,7 +389,149 @@ class TrainDP3Workspace:
         for key, value in runner_log.items():
             if isinstance(value, float):
                 cprint(f"{key}: {value:.4f}", 'magenta')
+
+    def eval_pushT(self):
+        # load the latest checkpoint
+        cfg = copy.deepcopy(self.cfg)
+
+        ckpt_dir = os.path.join(self.output_dir, 'checkpoints')
+        fn_ext = ".ckpt"
+        # DP3
+        if "pusht_cornerpc-dp3-0806_3am_seed1" in ckpt_dir:
+            lastest_ckpt_path_list = [
+                "epoch=2000-mean_traj_rewards=0.892",
+                "epoch=1950-mean_traj_rewards=0.801",
+                "epoch=1900-mean_traj_rewards=0.648",
+                "epoch=1850-mean_traj_rewards=0.859",
+                "epoch=1800-mean_traj_rewards=0.656",
+            ]
+        elif "pusht_cornerpc-dp3-0806_3am_seed2" in ckpt_dir:
+            lastest_ckpt_path_list = [
+                "epoch=2000-mean_traj_rewards=0.865",
+                "epoch=1950-mean_traj_rewards=0.595",
+                "epoch=1900-mean_traj_rewards=0.828",
+                "epoch=1850-mean_traj_rewards=0.921",
+                "epoch=1800-mean_traj_rewards=0.610",
+            ]
+        elif "pusht_cornerpc-dp3-0806_3am_seed3" in ckpt_dir:
+            lastest_ckpt_path_list = [
+                "epoch=2000-mean_traj_rewards=0.765",
+                "epoch=1950-mean_traj_rewards=0.837",
+                "epoch=1950-mean_traj_rewards=0.674",
+                "epoch=1900-mean_traj_rewards=0.660",
+                "epoch=1850-mean_traj_rewards=0.876",
+                "epoch=1800-mean_traj_rewards=0.662",
+            ]
+        # SIMPLE_DP3
+        if "pusht_cornerpc-simple_dp3-0806_5pm_seed1" in ckpt_dir:
+            lastest_ckpt_path_list = [
+                "epoch=1999-mean_traj_rewards=-1.000",
+                "epoch=1950-mean_traj_rewards=0.647",
+                "epoch=1900-mean_traj_rewards=0.421",
+                "epoch=1850-mean_traj_rewards=0.379",
+                "epoch=1800-mean_traj_rewards=0.675",
+            ]
+        elif "pusht_cornerpc-simple_dp3-0806_5pm_seed2" in ckpt_dir:
+            lastest_ckpt_path_list = [
+                "epoch=1999-mean_traj_rewards=-1.000",
+                "epoch=1950-mean_traj_rewards=0.625",
+                "epoch=1900-mean_traj_rewards=0.504",
+                "epoch=1850-mean_traj_rewards=0.789",
+                "epoch=1800-mean_traj_rewards=0.558",
+            ]
+        elif "pusht_cornerpc-simple_dp3-0806_5pm_seed3" in ckpt_dir:
+            lastest_ckpt_path_list = [
+                "epoch=2000-mean_traj_rewards=0.694",
+                "epoch=1950-mean_traj_rewards=0.457",
+                "epoch=1900-mean_traj_rewards=0.683",
+                "epoch=1850-mean_traj_rewards=0.601",
+                "epoch=1800-mean_traj_rewards=0.446",
+            ]
+
+        rews = []
+        for relative_ckpt_path in lastest_ckpt_path_list:
+            full_ckpt_path = os.path.join(ckpt_dir, relative_ckpt_path + fn_ext)
+            cprint(f"Resuming from checkpoint {full_ckpt_path}", 'magenta')
+            self.load_checkpoint(path=full_ckpt_path)
+
+            # cfg.task.env_runner.render_size = 512
+
+            # configure env
+            env_runner: BaseRunner
+            env_runner = hydra.utils.instantiate(
+                cfg.task.env_runner,
+                output_dir=self.output_dir,
+                )
+            assert isinstance(env_runner, BaseRunner)
+            policy = self.model
+            if cfg.training.use_ema:
+                policy = self.ema_model
+            policy.eval()
+            policy.cuda()
+
+            env_runner.for_eval = True
+
+            runner_log = env_runner.run(policy)
         
+            cprint(f"---------------- Eval Results --------------", 'magenta')
+            cprint(f"checkpoint: {full_ckpt_path}", 'magenta')
+            for key, value in runner_log.items():
+                if isinstance(value, float):
+                    cprint(f"{key}: {value:.4f}", 'magenta')
+                    if "mean_traj_rewards" in key:
+                        rews.append(value)
+                        cprint(f"extending rews to {rews}", "blue")
+
+        # Save rews in info.npz
+        rews = np.array(rews)
+        # replace the "train" with "eval" in the output_dir
+        eval_output_dir = copy.deepcopy(self.output_dir)
+        eval_output_dir = eval_output_dir.replace("train_", "eval_")
+
+        if "simple_dp3" in eval_output_dir:
+            algo_name = "simple_dp3"
+        else:
+            algo_name = "dp3"
+
+        eval_output_dir = eval_output_dir.replace(self.cfg.exp_name, f"0806_eval_id_sim_pusht_3dof_{algo_name}_s{self.seed}")
+
+        cprint(f"eval_output_dir: {eval_output_dir}", "red")
+        # create the directory if not exists
+        os.makedirs(eval_output_dir, exist_ok=True)
+        np.savez(os.path.join(eval_output_dir, 'info.npz'), rews=rews)
+
+
+
+        # path_template = pathlib.Path(self.output_dir).joinpath('checkpoints')
+        # import pdb; pdb.set_trace()
+
+        # lastest_ckpt_path = self.get_checkpoint_path(tag="latest")
+        # if lastest_ckpt_path.is_file():
+        #     cprint(f"Resuming from checkpoint {lastest_ckpt_path}", 'magenta')
+        #     self.load_checkpoint(path=lastest_ckpt_path)
+        
+        # # configure env
+        # env_runner: BaseRunner
+        # env_runner = hydra.utils.instantiate(
+        #     cfg.task.env_runner,
+        #     output_dir=self.output_dir,
+        #     )
+        # assert isinstance(env_runner, BaseRunner)
+        # policy = self.model
+        # if cfg.training.use_ema:
+        #     policy = self.ema_model
+        # policy.eval()
+        # policy.cuda()
+
+        # env_runner.for_eval = True
+
+        # runner_log = env_runner.run(policy)
+      
+        # cprint(f"---------------- Eval Results --------------", 'magenta')
+        # for key, value in runner_log.items():
+        #     if isinstance(value, float):
+        #         cprint(f"{key}: {value:.4f}", 'magenta')
+  
     @property
     def output_dir(self):
         output_dir = self._output_dir

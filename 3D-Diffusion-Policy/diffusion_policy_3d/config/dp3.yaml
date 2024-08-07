@@ -128,7 +128,7 @@ checkpoint:
   topk:
     monitor_key: epoch
     mode: max
-    k: 5
+    k: 8
     format_str: 'epoch={epoch:04d}-mean_traj_rewards={mean_traj_rewards:.3f}.ckpt'
   save_last_ckpt: True # this only saves when save_ckpt is True
   save_last_snapshot: False

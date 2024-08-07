@@ -134,7 +134,7 @@ def main(in_dir, num_demos, obs_mode, ac_mode, codebase):
             obs_pc = render["pc"]
             obs_state = env._get_obs()  # (1, 9)
             obs_state = obs_state.squeeze(0)  # (9,)
-            action = actions[i]
+            action = np.append(actions[i], 0.0) # (2 + 1,)
 
             point_cloud_arrays_sub.append(obs_pc)
             state_arrays_sub.append(obs_state)

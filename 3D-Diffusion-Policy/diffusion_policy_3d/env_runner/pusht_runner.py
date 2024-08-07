@@ -21,6 +21,32 @@ from diffusion_policy_3d.env.pushT.sim_pusht.utils.process_data_for_dp3 import A
 from termcolor import cprint
 import copy
 
+import cv2
+import skvideo.io
+import imageio
+
+def _make_dir(filename):
+    folder = os.path.dirname(filename)
+    os.makedirs(folder, exist_ok=True)
+
+def save_images_to_video(video_frames, filename, fps=10, video_format="mp4"):
+    if len(video_frames) == 0:
+        return False
+
+    assert fps == int(fps), fps
+    _make_dir(filename)
+
+    skvideo.io.vwrite(
+        filename,
+        video_frames,
+        inputdict={
+            "-r": str(int(fps)),
+        },
+        outputdict={"-f": video_format, "-pix_fmt": "yuv420p"},
+    )
+
+    return True
+
 
 class PushTRunner(BaseRunner):
     def __init__(self,
@@ -46,6 +72,7 @@ class PushTRunner(BaseRunner):
         self.task_name = task_name
         self.seed = seed
         self.render_size = render_size
+        self.for_eval = False
 
 
         def env_fn(task_name, seed, render_size):
@@ -72,7 +99,7 @@ class PushTRunner(BaseRunner):
                 n_obs_steps=n_obs_steps,
                 n_action_steps=n_action_steps,
                 max_episode_steps=max_steps,
-                reward_agg_method='sum',
+                reward_agg_method='last',
             )
         self.eval_episodes = eval_episodes
         self.env = env_fn(self.task_name, self.seed, self.render_size)
@@ -95,14 +122,24 @@ class PushTRunner(BaseRunner):
         all_success_rates = []
         env = self.env
 
-        if epoch >=1600:
-            print(f"Epoch {epoch} is greater than 1600, so setting eval_episodes to self.eval_episodes -- real eval")
+        if self.for_eval:
+            # save_video = True
+            save_video = False
             eval_episodes = self.eval_episodes
         else:
-            print(f"Epoch {epoch} is less than 1600, so setting eval_episodes to 1 -- saving time")
-            eval_episodes = 1
+            save_video = False
+            # For training, we only need to evaluate one episode when epoch < 1600
+            if epoch >=1600:
+                print(f"Epoch {epoch} is greater than 1600, so setting eval_episodes to self.eval_episodes -- real eval")
+                eval_episodes = self.eval_episodes
+            else:
+                print(f"Epoch {epoch} is less than 1600, so setting eval_episodes to 1 -- saving time")
+                eval_episodes = 1
         
         for episode_idx in tqdm(range(eval_episodes), desc=f"Eval in PushT {self.task_name} Pointcloud Env", leave=False, mininterval=self.tqdm_interval_sec):
+            
+            # update seed
+            self.env.update_seed(self.seed * 100 + episode_idx)
             
             # start rollout
             obs = env.reset()
@@ -138,7 +175,18 @@ class PushTRunner(BaseRunner):
 
             all_success_rates.append(is_success)
             all_traj_rewards.append(traj_reward)
+
+            cprint(f"Finish the episode_idx={episode_idx} with traj_reward={traj_reward}", 'red')
+
+            if save_video:
+                video_frames = env.env.get_video()
+                if len(video_frames.shape) == 5:
+                    video_frames = video_frames[:, 0]  # select first frame
             
+                filename = os.path.join(self.output_dir, f"sim_video_eval_for_{episode_idx}.mp4")
+
+                save_images_to_video(video_frames, filename, fps=10, video_format="mp4")
+
 
         max_rewards = collections.defaultdict(list)
         log_data = dict()
@@ -156,16 +204,9 @@ class PushTRunner(BaseRunner):
         self.logger_util_test10.record(np.mean(all_success_rates))
         log_data['SR_test_L3'] = self.logger_util_test.average_of_largest_K()
         log_data['SR_test_L5'] = self.logger_util_test10.average_of_largest_K()
-        
 
-        # videos = env.env.get_video()
-        # if len(videos.shape) == 5:
-        #     videos = videos[:, 0]  # select first frame
         
-        # if save_video:
-        #     videos_wandb = wandb.Video(videos, fps=self.fps, format="mp4")
-        #     log_data[f'sim_video_eval'] = videos_wandb
-
+        
         _ = env.reset()
         videos = None
 

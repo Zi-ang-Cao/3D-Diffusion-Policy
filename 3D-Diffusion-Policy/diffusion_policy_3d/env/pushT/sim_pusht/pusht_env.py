@@ -108,6 +108,10 @@ class PushTEnv(gym.Env):
     @property
     def name(self):
         return "pusht"
+    
+    def update_seed(self, seed):
+        print(f"Updating seed @PushTEnv to {seed}.")
+        self.rng = np.random.RandomState(seed=seed)
 
     def reset(self):
         self._t = 0

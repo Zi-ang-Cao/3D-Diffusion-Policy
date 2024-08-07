@@ -1,9 +1,23 @@
 # Examples:
+################# ac_dim2 #################
+# In the tmux `dp3` @ bohg-ws-17
 # bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_3am 1 0    # juno2
 # bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_3am 2 0    # ws-17
 # bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_3am 3 0    # ws-20
 
+# In the tmux `dp3` @ bohg-ws-17
+# bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_5pm 1 0    # ws-20
+# bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_5pm 2 0    # Juno2
+# bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_5pm 3 0    # ws-20  [DONE]
 
+
+################# ac_dim3 #################
+# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_11pm 1 0    # juno1
+# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_11pm 2 1    # juno1
+# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_11pm 3 2    # juno1
+
+# In the tmux `dp3` @ bohg-ws-17
+# bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_11pm 1 0; bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_11pm 2 0; bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_11pm 3 0;    # Juno2
 
 DEBUG=False
 save_ckpt=True
@@ -14,7 +28,7 @@ config_name=${alg_name}
 addition_info=${3}
 seed=${4}
 exp_name=${task_name}-${alg_name}-${addition_info}
-run_dir="3D-Diffusion-Policy/logs/train/${exp_name}_seed${seed}"
+run_dir="3D-Diffusion-Policy/logs_ac_dim3/train_${alg_name}/${exp_name}_seed${seed}"
 
 
 # gpu_id=$(bash scripts/find_gpu.sh)

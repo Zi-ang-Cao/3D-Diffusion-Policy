@@ -47,11 +47,14 @@ def dict_take_last_n(x, n):
     return result
 
 
-def aggregate(data, method='max'):
+def aggregate(data, method='last'):
     if isinstance(data[0], torch.Tensor):
         if method == 'max':
             # equivalent to any
             return torch.max(torch.stack(data))
+        elif method == 'last':
+            # grab the last element
+            return data[-1]
         elif method == 'min':
             # equivalent to all
             return torch.min(torch.stack(data))
@@ -65,6 +68,9 @@ def aggregate(data, method='max'):
         if method == 'max':
             # equivalent to any
             return np.max(data)
+        elif method == 'last':
+            # grab the last element
+            return data[-1]
         elif method == 'min':
             # equivalent to all
             return np.min(data)
