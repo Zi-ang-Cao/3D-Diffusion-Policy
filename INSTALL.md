@@ -1,6 +1,10 @@
 # Installing Conda Environment from Zero to Hero
 
 ```Shell
+sudo apt-get install libx11-dev
+sudo apt-get install libglew-dev
+sudo apt-get install ffmpeg
+
 conda create -n lfd_dp3_juno1 python=3.10 -y
 conda activate lfd_dp3_juno1
 
@@ -41,6 +45,8 @@ pip install pymunk==6.6.0
 pip install shapely==2.0.2
 
 pip install scikit-learn==1.3.0 scikit-spatial==7.0.0 scikit-video==1.1.11 scikit-image==0.22.0
+
+pip install gtimer pybullet
 ```
 ----------------------------------------------------------------------------------------------------------------------------
 
