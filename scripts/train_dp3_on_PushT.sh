@@ -12,9 +12,9 @@
 
 
 ################# ac_dim3 #################
-# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_11pm 1 0    # juno1
-# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_11pm 2 1    # juno1
-# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_11pm 3 2    # juno1
+# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0807_2am 1 0    # juno2
+# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0807_2am 2 0    # juno2
+# bash scripts/train_dp3_on_PushT.sh dp3 pusht_cornerpc 0807_2am 3 0    # gcp
 
 # In the tmux `dp3` @ bohg-ws-17
 # bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_11pm 1 0; bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_11pm 2 0; bash scripts/train_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_11pm 3 0;    # Juno2

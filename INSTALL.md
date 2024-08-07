@@ -1,20 +1,48 @@
 # Installing Conda Environment from Zero to Hero
 
-```shell
-conda creat -n lfd_dp3 --clone lfd
+```Shell
+conda create -n lfd_dp3_juno1 python=3.10 -y
+conda activate lfd_dp3_juno1
 
-conda activate lfd_dp3
+pip uninstall -y torch torchvision torchaudio
+
+# on CUDA-11.8
+pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu118
+
+conda install -y fvcore iopath -c conda-forge -c iopath -c fvcore -y
+pip install --no-index --no-cache-dir pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt210/download.html
+
+
+# # on CUDA-12.1
+# pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu121
+# conda install -y fvcore iopath -c conda-forge -c iopath -c fvcore -y
+# pip install --no-index --no-cache-dir pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt210/download.html
 
 cd 3D-Diffusion-Policy && pip install -e . && cd ..
 
 pip install setuptools==59.5.0 Cython==0.29.35 patchelf==0.17.2.0
 
 cd third_party
+cd gym-0.21.0 && pip install -e . && cd ..
 cd Metaworld && pip install -e . && cd ..
-export MUJOCO_GL=egl
+
+cd mujoco-py-2.1.2.14
+pip install -e .
+cd ../..
 
 pip install zarr==2.12.0 wandb ipdb gpustat dm_control omegaconf hydra-core==1.2.0 dill==0.3.5.1 einops==0.4.1 diffusers==0.11.1 numba==0.56.4 moviepy imageio av matplotlib termcolor
+
+pip install opencv-python==4.9.0.80 opencv-python-headless==4.9.0.80
+pip install -U opencv-contrib-python==4.7.0.72
+
+pip install hydra-core wandb open3d chardet trimesh natsort ffmpeg imageio ipykernel pygame
+
+pip install pymunk==6.6.0
+pip install shapely==2.0.2
+
+pip install scikit-learn==1.3.0 scikit-spatial==7.0.0 scikit-video==1.1.11 scikit-image==0.22.0
 ```
+----------------------------------------------------------------------------------------------------------------------------
 
 The following guidance works well for a machine with 3090/A40/A800/A100 GPU, cuda 11.7, driver 515.65.01.
 
