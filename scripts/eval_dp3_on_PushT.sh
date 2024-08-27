@@ -1,7 +1,12 @@
 # use the same command as training except the script
 # for example:
-# bash scripts/eval_dp3_on_PushT.sh dp3 pusht_cornerpc 0806_3am 1 0
-# bash scripts/eval_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 0806_5pm 1 0
+# AC_DIM=2
+# bash scripts/eval_dp3_on_PushT.sh dp3 pusht_cornerpc 2 0806_3am 1 0
+# bash scripts/eval_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 2 0806_5pm 1 0
+
+# AC_DIM=3
+# bash scripts/eval_dp3_on_PushT.sh dp3 pusht_cornerpc 3 0807_2am 1 0
+# bash scripts/eval_dp3_on_PushT.sh simple_dp3 pusht_cornerpc 3 0806_11pm 1 0
 
 
 
@@ -10,13 +15,13 @@ DEBUG=False
 alg_name=${1}
 task_name=${2}
 config_name=${alg_name}
-addition_info=${3}
-seed=${4}
+ac_dim=${3}
+addition_info=${4}
+seed=${5}
+gpu_id=${6}
+
 exp_name=${task_name}-${alg_name}-${addition_info}
-run_dir="3D-Diffusion-Policy/logs_ac_dim3/train_${alg_name}/${exp_name}_seed${seed}"
-
-
-gpu_id=${5}
+run_dir="3D-Diffusion-Policy/logs_ac_dim${ac_dim}/train_${alg_name}/${exp_name}_seed${seed}"
 
 
 cd 3D-Diffusion-Policy

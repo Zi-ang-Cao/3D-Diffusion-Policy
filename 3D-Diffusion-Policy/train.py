@@ -397,57 +397,110 @@ class TrainDP3Workspace:
 
         ckpt_dir = os.path.join(self.output_dir, 'checkpoints')
         fn_ext = ".ckpt"
-        # DP3
-        if "pusht_cornerpc-dp3-0806_3am_seed1" in ckpt_dir:
-            lastest_ckpt_path_list = [
-                "epoch=2000-mean_traj_rewards=0.892",
-                "epoch=1950-mean_traj_rewards=0.801",
-                "epoch=1900-mean_traj_rewards=0.648",
-                "epoch=1850-mean_traj_rewards=0.859",
-                "epoch=1800-mean_traj_rewards=0.656",
-            ]
-        elif "pusht_cornerpc-dp3-0806_3am_seed2" in ckpt_dir:
-            lastest_ckpt_path_list = [
-                "epoch=2000-mean_traj_rewards=0.865",
-                "epoch=1950-mean_traj_rewards=0.595",
-                "epoch=1900-mean_traj_rewards=0.828",
-                "epoch=1850-mean_traj_rewards=0.921",
-                "epoch=1800-mean_traj_rewards=0.610",
-            ]
-        elif "pusht_cornerpc-dp3-0806_3am_seed3" in ckpt_dir:
-            lastest_ckpt_path_list = [
-                "epoch=2000-mean_traj_rewards=0.765",
-                "epoch=1950-mean_traj_rewards=0.837",
-                "epoch=1950-mean_traj_rewards=0.674",
-                "epoch=1900-mean_traj_rewards=0.660",
-                "epoch=1850-mean_traj_rewards=0.876",
-                "epoch=1800-mean_traj_rewards=0.662",
-            ]
-        # SIMPLE_DP3
-        if "pusht_cornerpc-simple_dp3-0806_5pm_seed1" in ckpt_dir:
-            lastest_ckpt_path_list = [
-                "epoch=1999-mean_traj_rewards=-1.000",
-                "epoch=1950-mean_traj_rewards=0.647",
-                "epoch=1900-mean_traj_rewards=0.421",
-                "epoch=1850-mean_traj_rewards=0.379",
-                "epoch=1800-mean_traj_rewards=0.675",
-            ]
-        elif "pusht_cornerpc-simple_dp3-0806_5pm_seed2" in ckpt_dir:
-            lastest_ckpt_path_list = [
-                "epoch=1999-mean_traj_rewards=-1.000",
-                "epoch=1950-mean_traj_rewards=0.625",
-                "epoch=1900-mean_traj_rewards=0.504",
-                "epoch=1850-mean_traj_rewards=0.789",
-                "epoch=1800-mean_traj_rewards=0.558",
-            ]
-        elif "pusht_cornerpc-simple_dp3-0806_5pm_seed3" in ckpt_dir:
-            lastest_ckpt_path_list = [
-                "epoch=2000-mean_traj_rewards=0.694",
-                "epoch=1950-mean_traj_rewards=0.457",
-                "epoch=1900-mean_traj_rewards=0.683",
-                "epoch=1850-mean_traj_rewards=0.601",
-                "epoch=1800-mean_traj_rewards=0.446",
-            ]
+        if "logs_ac_dim2" in ckpt_dir:
+            # DP3 + ac_dim=2
+            if "pusht_cornerpc-dp3-0806_3am_seed1" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=2000-mean_traj_rewards=0.892",
+                    "epoch=1950-mean_traj_rewards=0.801",
+                    "epoch=1900-mean_traj_rewards=0.648",
+                    "epoch=1850-mean_traj_rewards=0.859",
+                    "epoch=1800-mean_traj_rewards=0.656",
+                ]
+            elif "pusht_cornerpc-dp3-0806_3am_seed2" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=2000-mean_traj_rewards=0.865",
+                    "epoch=1950-mean_traj_rewards=0.595",
+                    "epoch=1900-mean_traj_rewards=0.828",
+                    "epoch=1850-mean_traj_rewards=0.921",
+                    "epoch=1800-mean_traj_rewards=0.610",
+                ]
+            elif "pusht_cornerpc-dp3-0806_3am_seed3" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=2000-mean_traj_rewards=0.765",
+                    "epoch=1950-mean_traj_rewards=0.837",
+                    "epoch=1950-mean_traj_rewards=0.674",
+                    "epoch=1900-mean_traj_rewards=0.660",
+                    "epoch=1850-mean_traj_rewards=0.876",
+                    "epoch=1800-mean_traj_rewards=0.662",
+                ]
+            # SIMPLE_DP3 + ac_dim=2
+            if "pusht_cornerpc-simple_dp3-0806_5pm_seed1" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=1999-mean_traj_rewards=-1.000",
+                    "epoch=1950-mean_traj_rewards=0.647",
+                    "epoch=1900-mean_traj_rewards=0.421",
+                    "epoch=1850-mean_traj_rewards=0.379",
+                    "epoch=1800-mean_traj_rewards=0.675",
+                ]
+            elif "pusht_cornerpc-simple_dp3-0806_5pm_seed2" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=1999-mean_traj_rewards=-1.000",
+                    "epoch=1950-mean_traj_rewards=0.625",
+                    "epoch=1900-mean_traj_rewards=0.504",
+                    "epoch=1850-mean_traj_rewards=0.789",
+                    "epoch=1800-mean_traj_rewards=0.558",
+                ]
+            elif "pusht_cornerpc-simple_dp3-0806_5pm_seed3" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=2000-mean_traj_rewards=0.694",
+                    "epoch=1950-mean_traj_rewards=0.457",
+                    "epoch=1900-mean_traj_rewards=0.683",
+                    "epoch=1850-mean_traj_rewards=0.601",
+                    "epoch=1800-mean_traj_rewards=0.446",
+                ]
+        else:
+            # DP3 + ac_dim=3
+            if "pusht_cornerpc-dp3-0807_2am_seed1" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=1999-mean_traj_rewards=-1.000",
+                    "epoch=1950-mean_traj_rewards=0.661",
+                    "epoch=1900-mean_traj_rewards=0.815",
+                    "epoch=1850-mean_traj_rewards=0.759",
+                    "epoch=1800-mean_traj_rewards=0.724",
+                ]
+            elif "pusht_cornerpc-dp3-0807_2am_seed2" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=1999-mean_traj_rewards=-1.000",
+                    "epoch=1950-mean_traj_rewards=0.665",
+                    "epoch=1900-mean_traj_rewards=0.671",
+                    "epoch=1850-mean_traj_rewards=0.717",
+                    "epoch=1800-mean_traj_rewards=0.751",
+                ]
+            elif "pusht_cornerpc-dp3-0807_2am_seed3" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=1999-mean_traj_rewards=-1.000",
+                    "epoch=1950-mean_traj_rewards=0.916",
+                    "epoch=1900-mean_traj_rewards=0.940",
+                    "epoch=1850-mean_traj_rewards=0.897",
+                    "epoch=1800-mean_traj_rewards=0.832",
+                ]
+            # SIMPLE_DP3 + ac_dim=3
+            if "pusht_cornerpc-simple_dp3-0806_11pm_seed1" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=1999-mean_traj_rewards=-1.000",
+                    "epoch=1950-mean_traj_rewards=0.734",
+                    "epoch=1900-mean_traj_rewards=0.687",
+                    "epoch=1850-mean_traj_rewards=0.694",
+                    "epoch=1800-mean_traj_rewards=0.616",
+                ]
+            elif "pusht_cornerpc-simple_dp3-0806_11pm_seed2" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=1999-mean_traj_rewards=-1.000",
+                    "epoch=1950-mean_traj_rewards=0.609",
+                    "epoch=1900-mean_traj_rewards=0.694",
+                    "epoch=1850-mean_traj_rewards=0.823",
+                    "epoch=1800-mean_traj_rewards=0.792",
+                ]
+            elif "pusht_cornerpc-simple_dp3-0806_11pm_seed3" in ckpt_dir:
+                lastest_ckpt_path_list = [
+                    "epoch=1999-mean_traj_rewards=-1.000",
+                    "epoch=1950-mean_traj_rewards=0.672",
+                    "epoch=1900-mean_traj_rewards=0.536",
+                    "epoch=1850-mean_traj_rewards=0.539",
+                    "epoch=1800-mean_traj_rewards=0.593",
+                ]
+
 
         rews = []
         for relative_ckpt_path in lastest_ckpt_path_list:
