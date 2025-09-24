@@ -4,6 +4,7 @@
 Sometimes its useful to send a mujoco model over the network, or save it
 to a file with all assets embedded.
 """
+
 import mujoco_py
 
 # The binary MJB format is preferable, since it includes assets like

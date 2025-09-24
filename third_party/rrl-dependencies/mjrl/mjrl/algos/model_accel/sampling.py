@@ -2,10 +2,12 @@ import logging
 import numpy as np
 from mjrl.utils.gym_env import GymEnv
 from mjrl.utils import tensor_utils
+
 logging.disable(logging.CRITICAL)
 import multiprocessing as mp
 import time as timer
 import torch
+
 logging.disable(logging.CRITICAL)
 
 
@@ -13,23 +15,24 @@ logging.disable(logging.CRITICAL)
 # Rollout parameteric policy on learned env to collect data
 # ===========================================================
 
+
 def policy_rollout(
-        num_traj,
-        env,
-        policy,
-        learned_model,
-        init_state=None,
-        eval_mode=False,
-        horizon=1e6,
-        env_kwargs=None,
-        seed=None,
-        s_min=None,
-        s_max=None,
-        a_min=None,
-        a_max=None,
-        large_value=float(1e2),
-        ):
-    
+    num_traj,
+    env,
+    policy,
+    learned_model,
+    init_state=None,
+    eval_mode=False,
+    horizon=1e6,
+    env_kwargs=None,
+    seed=None,
+    s_min=None,
+    s_max=None,
+    a_min=None,
+    a_max=None,
+    large_value=float(1e2),
+):
+
     # Only CPU rollouts are currently supported.
     # TODO(Aravind) : Extend GPU support
 
@@ -57,7 +60,7 @@ def policy_rollout(
     elif type(init_state) == list:
         st = torch.from_numpy(np.array(init_state)).float()
     elif type(init_state) == torch.Tensor:
-        assert init_state.device == 'cpu'
+        assert init_state.device == "cpu"
         pass
     else:
         print("Unsupported format for init state")
@@ -75,16 +78,15 @@ def policy_rollout(
         at = enforce_tensor_bounds(at, a_min, a_max, large_value)
         stp1 = learned_model.forward(st, at)
         stp1 = enforce_tensor_bounds(stp1, s_min, s_max, large_value)
-        obs.append(st.to('cpu').data.numpy())
-        act.append(at.to('cpu').data.numpy())
+        obs.append(st.to("cpu").data.numpy())
+        act.append(at.to("cpu").data.numpy())
         st = stp1
 
     obs = np.array(obs)
     obs = np.swapaxes(obs, 0, 1)  # (num_traj, horizon, state_dim)
     act = np.array(act)
     act = np.swapaxes(act, 0, 1)  # (num_traj, horizon, action_dim)
-    paths = dict(observations = obs,
-                 actions = act)
+    paths = dict(observations=obs, actions=act)
 
     return paths
 
@@ -92,6 +94,7 @@ def policy_rollout(
 # ===========================================================
 # Rollout action sequences on the learned model
 # ===========================================================
+
 
 def trajectory_rollout(actions, learned_model, init_states):
     # init_states: (num_traj, state_dim) : numpy array
@@ -128,14 +131,16 @@ def trajectory_rollout(actions, learned_model, init_states):
 # ===========================================================
 # TODO(Aravind): Remove redundancy. This can be coupled with the standard sample_paths in MJRL utils
 
-def sample_paths(num_traj,
-                 env,
-                 policy,  # mpc policy on fitted model
-                 horizon=1e6,
-                 eval_mode=True,
-                 base_seed=None,
-                 noise_level=0.1,
-                 ):
+
+def sample_paths(
+    num_traj,
+    env,
+    policy,  # mpc policy on fitted model
+    horizon=1e6,
+    eval_mode=True,
+    base_seed=None,
+    noise_level=0.1,
+):
 
     # get the correct env behavior
     if type(env) == str:
@@ -153,10 +158,10 @@ def sample_paths(num_traj,
     paths = []
     for ep in range(num_traj):
         env.reset()
-        observations=[]
-        actions=[]
-        rewards=[]
-        env_infos=[]
+        observations = []
+        actions = []
+        rewards = []
+        env_infos = []
         t = 0
         done = False
         while t < horizon and done is False:
@@ -164,9 +169,11 @@ def sample_paths(num_traj,
             ifo = env.get_env_infos()
             act = policy.get_action(obs)
             if eval_mode is False and type(act) != list:
-                act = act + np.random.uniform(low=-noise_level, high=noise_level, size=act.shape[0])
+                act = act + np.random.uniform(
+                    low=-noise_level, high=noise_level, size=act.shape[0]
+                )
             if type(act) == list:
-                act = act[0] if eval_mode is False else act[1]['evaluation']
+                act = act[0] if eval_mode is False else act[1]["evaluation"]
             next_obs, reward, done, _ = env.step(act)
             t = t + 1
             observations.append(obs)
@@ -178,7 +185,7 @@ def sample_paths(num_traj,
             actions=np.array(actions),
             rewards=np.array(rewards),
             terminated=done,
-            env_infos=tensor_utils.stack_tensor_dict_list(env_infos)
+            env_infos=tensor_utils.stack_tensor_dict_list(env_infos),
         )
         paths.append(path)
     return paths
@@ -188,14 +195,15 @@ def sample_paths(num_traj,
 # Utility functions
 # ===========================================================
 
+
 def discount_sum(x, gamma, discounted_terminal=0.0):
     """
     discount sum a sequence with terminal value
     """
     y = []
     run_sum = discounted_terminal
-    for t in range( len(x)-1, -1, -1):
-        run_sum = x[t] + gamma*run_sum
+    for t in range(len(x) - 1, -1, -1):
+        run_sum = x[t] + gamma * run_sum
         y.append(run_sum)
 
     return np.array(y[::-1])
@@ -211,11 +219,13 @@ def generate_perturbed_actions(base_act, filter_coefs):
     eps[0] = eps[0] * (beta_0 + beta_1 + beta_2)
     eps[1] = beta_0 * eps[1] + (beta_1 + beta_2) * eps[0]
     for i in range(2, eps.shape[0]):
-        eps[i] = beta_0*eps[i] + beta_1*eps[i-1] + beta_2*eps[i-2]
+        eps[i] = beta_0 * eps[i] + beta_1 * eps[i - 1] + beta_2 * eps[i - 2]
     return eps
 
 
-def generate_paths(num_traj, learned_model, start_state, base_act, filter_coefs, base_seed=None):
+def generate_paths(
+    num_traj, learned_model, start_state, base_act, filter_coefs, base_seed=None
+):
     """
     first generate enough perturbed actions
     then do rollouts with generated actions
@@ -232,8 +242,15 @@ def generate_paths(num_traj, learned_model, start_state, base_act, filter_coefs,
     return paths
 
 
-def evaluate_policy(e, policy, learned_model, noise_level=0.0,
-                    real_step=False, num_episodes=10, visualize=False):
+def evaluate_policy(
+    e,
+    policy,
+    learned_model,
+    noise_level=0.0,
+    real_step=False,
+    num_episodes=10,
+    visualize=False,
+):
     # rollout the policy on env and record performance
     paths = []
     for ep in range(num_episodes):
@@ -249,12 +266,14 @@ def evaluate_policy(e, policy, learned_model, noise_level=0.0,
             ifo = e.get_env_infos()
             a = policy.get_action(o)
             if type(a) == list:
-                a = a[1]['evaluation']
+                a = a[1]["evaluation"]
             if noise_level > 0.0:
-                a = a + e.env.env.np_random.uniform(low=-noise_level, high=noise_level, size=a.shape[0])
+                a = a + e.env.env.np_random.uniform(
+                    low=-noise_level, high=noise_level, size=a.shape[0]
+                )
             if real_step is False:
                 next_s = learned_model.predict(o, a)
-                r = 0.0 # temporarily
+                r = 0.0  # temporarily
                 e.env.env.set_fitted_state(next_s)
             else:
                 next_o, r, done, ifo2 = e.step(a)
@@ -268,9 +287,12 @@ def evaluate_policy(e, policy, learned_model, noise_level=0.0,
             rewards.append(r)
             env_infos.append(ifo)
 
-        path = dict(observations=np.array(observations), actions=np.array(actions),
-                    rewards=np.array(rewards),
-                    env_infos=tensor_utils.stack_tensor_dict_list(env_infos))
+        path = dict(
+            observations=np.array(observations),
+            actions=np.array(actions),
+            rewards=np.array(rewards),
+            env_infos=tensor_utils.stack_tensor_dict_list(env_infos),
+        )
         if real_step is False:
             e.env.env.compute_path_rewards(path)
             try:
@@ -279,36 +301,42 @@ def evaluate_policy(e, policy, learned_model, noise_level=0.0,
                 pass
         paths.append(path)
         if visualize:
-            print("episode score = %f " % np.sum(path['rewards']))
+            print("episode score = %f " % np.sum(path["rewards"]))
     return paths
 
 
-def enforce_tensor_bounds(torch_tensor, min_val=None, max_val=None, 
-                          large_value=float(1e4), device=None):
+def enforce_tensor_bounds(
+    torch_tensor, min_val=None, max_val=None, large_value=float(1e4), device=None
+):
     """
-        Clamp the torch_tensor to Box[min_val, max_val]
-        torch_tensor should have shape (A, B)
-        min_val and max_val can either be scalars or tensors of shape (B,)
-        If min_val and max_val are not given, they are treated as large_value
+    Clamp the torch_tensor to Box[min_val, max_val]
+    torch_tensor should have shape (A, B)
+    min_val and max_val can either be scalars or tensors of shape (B,)
+    If min_val and max_val are not given, they are treated as large_value
     """
     # compute bounds
-    if min_val is None: min_val = - large_value
-    if max_val is None: max_val = large_value
-    if device is None:  device = torch_tensor.data.device
+    if min_val is None:
+        min_val = -large_value
+    if max_val is None:
+        max_val = large_value
+    if device is None:
+        device = torch_tensor.data.device
 
     assert type(min_val) == float or type(min_val) == torch.Tensor
     assert type(max_val) == float or type(max_val) == torch.Tensor
-    
+
     if type(min_val) == torch.Tensor:
-        if len(min_val.shape) > 0: assert min_val.shape[-1] == torch_tensor.shape[-1]
+        if len(min_val.shape) > 0:
+            assert min_val.shape[-1] == torch_tensor.shape[-1]
     else:
         min_val = torch.tensor(min_val)
-    
+
     if type(max_val) == torch.Tensor:
-        if len(max_val.shape) > 0: assert max_val.shape[-1] == torch_tensor.shape[-1]
+        if len(max_val.shape) > 0:
+            assert max_val.shape[-1] == torch_tensor.shape[-1]
     else:
         max_val = torch.tensor(max_val)
-    
+
     min_val = min_val.to(device)
     max_val = max_val.to(device)
 

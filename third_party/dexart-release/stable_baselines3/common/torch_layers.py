@@ -86,7 +86,9 @@ class NatureCNN(BaseFeaturesExtractor):
 
         # Compute shape by doing one forward pass
         with th.no_grad():
-            n_flatten = self.cnn(th.as_tensor(observation_space.sample()[None]).float()).shape[1]
+            n_flatten = self.cnn(
+                th.as_tensor(observation_space.sample()[None]).float()
+            ).shape[1]
 
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
 
@@ -95,11 +97,11 @@ class NatureCNN(BaseFeaturesExtractor):
 
 
 def create_mlp(
-        input_dim: int,
-        output_dim: int,
-        net_arch: List[int],
-        activation_fn: Type[nn.Module] = nn.ReLU,
-        squash_output: bool = False,
+    input_dim: int,
+    output_dim: int,
+    net_arch: List[int],
+    activation_fn: Type[nn.Module] = nn.ReLU,
+    squash_output: bool = False,
 ) -> List[nn.Module]:
     """
     Create a multi layer perceptron (MLP), which is
@@ -164,34 +166,46 @@ class MlpExtractor(nn.Module):
     """
 
     def __init__(
-            self,
-            feature_dim: int,
-            net_arch: List[Union[int, Dict[str, List[int]]]],
-            activation_fn: Type[nn.Module],
-            device: Union[th.device, str] = "auto",
+        self,
+        feature_dim: int,
+        net_arch: List[Union[int, Dict[str, List[int]]]],
+        activation_fn: Type[nn.Module],
+        device: Union[th.device, str] = "auto",
     ):
         super().__init__()
         device = get_device(device)
         shared_net, policy_net, value_net = [], [], []
-        policy_only_layers = []  # Layer sizes of the network that only belongs to the policy network
-        value_only_layers = []  # Layer sizes of the network that only belongs to the value network
+        policy_only_layers = (
+            []
+        )  # Layer sizes of the network that only belongs to the policy network
+        value_only_layers = (
+            []
+        )  # Layer sizes of the network that only belongs to the value network
         last_layer_dim_shared = feature_dim
 
         # Iterate through the shared layers and build the shared parts of the network
         for layer in net_arch:
             if isinstance(layer, int):  # Check that this is a shared layer
                 # TODO: give layer a meaningful name
-                shared_net.append(nn.Linear(last_layer_dim_shared, layer))  # add linear of size layer
+                shared_net.append(
+                    nn.Linear(last_layer_dim_shared, layer)
+                )  # add linear of size layer
                 shared_net.append(activation_fn())
                 last_layer_dim_shared = layer
             else:
-                assert isinstance(layer, dict), "Error: the net_arch list can only contain ints and dicts"
+                assert isinstance(
+                    layer, dict
+                ), "Error: the net_arch list can only contain ints and dicts"
                 if "pi" in layer:
-                    assert isinstance(layer["pi"], list), "Error: net_arch[-1]['pi'] must contain a list of integers."
+                    assert isinstance(
+                        layer["pi"], list
+                    ), "Error: net_arch[-1]['pi'] must contain a list of integers."
                     policy_only_layers = layer["pi"]
 
                 if "vf" in layer:
-                    assert isinstance(layer["vf"], list), "Error: net_arch[-1]['vf'] must contain a list of integers."
+                    assert isinstance(
+                        layer["vf"], list
+                    ), "Error: net_arch[-1]['vf'] must contain a list of integers."
                     value_only_layers = layer["vf"]
                 break  # From here on the network splits up in policy and value network
 
@@ -199,15 +213,21 @@ class MlpExtractor(nn.Module):
         last_layer_dim_vf = last_layer_dim_shared
 
         # Build the non-shared part of the network
-        for pi_layer_size, vf_layer_size in zip_longest(policy_only_layers, value_only_layers):
+        for pi_layer_size, vf_layer_size in zip_longest(
+            policy_only_layers, value_only_layers
+        ):
             if pi_layer_size is not None:
-                assert isinstance(pi_layer_size, int), "Error: net_arch[-1]['pi'] must only contain integers."
+                assert isinstance(
+                    pi_layer_size, int
+                ), "Error: net_arch[-1]['pi'] must only contain integers."
                 policy_net.append(nn.Linear(last_layer_dim_pi, pi_layer_size))
                 policy_net.append(activation_fn())
                 last_layer_dim_pi = pi_layer_size
 
             if vf_layer_size is not None:
-                assert isinstance(vf_layer_size, int), "Error: net_arch[-1]['vf'] must only contain integers."
+                assert isinstance(
+                    vf_layer_size, int
+                ), "Error: net_arch[-1]['vf'] must only contain integers."
                 value_net.append(nn.Linear(last_layer_dim_vf, vf_layer_size))
                 value_net.append(activation_fn())
                 last_layer_dim_vf = vf_layer_size
@@ -278,7 +298,9 @@ class CombinedExtractor(BaseFeaturesExtractor):
         return th.cat(encoded_tensor_list, dim=1)
 
 
-def get_actor_critic_arch(net_arch: Union[List[int], Dict[str, List[int]]]) -> Tuple[List[int], List[int]]:
+def get_actor_critic_arch(
+    net_arch: Union[List[int], Dict[str, List[int]]],
+) -> Tuple[List[int], List[int]]:
     """
     Get the actor and critic network architectures for off-policy actor-critic algorithms (SAC, TD3, DDPG).
 
@@ -311,18 +333,34 @@ def get_actor_critic_arch(net_arch: Union[List[int], Dict[str, List[int]]]) -> T
     if isinstance(net_arch, list):
         actor_arch, critic_arch = net_arch, net_arch
     else:
-        assert isinstance(net_arch, dict), "Error: the net_arch can only contain be a list of ints or a dict"
-        assert "pi" in net_arch, "Error: no key 'pi' was provided in net_arch for the actor network"
-        assert "qf" in net_arch, "Error: no key 'qf' was provided in net_arch for the critic network"
+        assert isinstance(
+            net_arch, dict
+        ), "Error: the net_arch can only contain be a list of ints or a dict"
+        assert (
+            "pi" in net_arch
+        ), "Error: no key 'pi' was provided in net_arch for the actor network"
+        assert (
+            "qf" in net_arch
+        ), "Error: no key 'qf' was provided in net_arch for the critic network"
         actor_arch, critic_arch = net_arch["pi"], net_arch["qf"]
     return actor_arch, critic_arch
 
 
 class PointNetImaginationExtractorGP(BaseFeaturesExtractor):
-    def __init__(self, observation_space: gym.spaces.Dict, pc_key: str, feat_key: Optional[str] = None,
-                 out_channel=256, extractor_name="smallpn",
-                 gt_key: Optional[str] = None, imagination_keys=("imagination_robot",), state_key="state",
-                 state_mlp_size=(64, 64), state_mlp_activation_fn=nn.ReLU, *kwargs):
+    def __init__(
+        self,
+        observation_space: gym.spaces.Dict,
+        pc_key: str,
+        feat_key: Optional[str] = None,
+        out_channel=256,
+        extractor_name="smallpn",
+        gt_key: Optional[str] = None,
+        imagination_keys=("imagination_robot",),
+        state_key="state",
+        state_mlp_size=(64, 64),
+        state_mlp_activation_fn=nn.ReLU,
+        *kwargs,
+    ):
         self.imagination_key = imagination_keys
         # Init state representation
         self.use_state = state_key is not None
@@ -331,7 +369,9 @@ class PointNetImaginationExtractorGP(BaseFeaturesExtractor):
         print(f"extractor use state = {self.use_state}")
         if self.use_state:
             if state_key not in observation_space.spaces.keys():
-                raise RuntimeError(f"State key {state_key} not in observation space: {observation_space}")
+                raise RuntimeError(
+                    f"State key {state_key} not in observation space: {observation_space}"
+                )
             self.state_space = observation_space[self.state_key]
         if feat_key is not None:
             if feat_key not in list(observation_space.keys()):
@@ -348,16 +388,21 @@ class PointNetImaginationExtractorGP(BaseFeaturesExtractor):
 
         if extractor_name == "smallpn":
             from stable_baselines3.networks.pretrain_nets import PointNet
+
             self.extractor = PointNet()
         elif extractor_name == "mediumpn":
             from stable_baselines3.networks.pretrain_nets import PointNetMedium
+
             self.extractor = PointNetMedium()
         elif extractor_name == "largepn":
             from stable_baselines3.networks.pretrain_nets import PointNetLarge
+
             self.extractor = PointNetLarge()
         else:
-            raise NotImplementedError(f"Extractor {extractor_name} not implemented. Available:\
-             smallpn, mediumpn, largepn")
+            raise NotImplementedError(
+                f"Extractor {extractor_name} not implemented. Available:\
+             smallpn, mediumpn, largepn"
+            )
 
         # self.n_input_channels = n_input_channels
         self.n_output_channels = out_channel
@@ -375,12 +420,16 @@ class PointNetImaginationExtractorGP(BaseFeaturesExtractor):
 
             self.n_output_channels = out_channel + output_dim
             self._features_dim = self.n_output_channels
-            self.state_mlp = nn.Sequential(*create_mlp(self.state_dim, output_dim, net_arch, state_mlp_activation_fn))
+            self.state_mlp = nn.Sequential(
+                *create_mlp(
+                    self.state_dim, output_dim, net_arch, state_mlp_activation_fn
+                )
+            )
 
     def forward(self, observations: TensorDict) -> th.Tensor:
         # get raw point cloud segmentation mask
         points = observations[self.pc_key][..., :3]  # B * N * 3
-        
+
         b, _, _ = points.shape
         if len(self.imagination_key) > 0:
             for key in self.imagination_key:
@@ -392,10 +441,9 @@ class PointNetImaginationExtractorGP(BaseFeaturesExtractor):
 
         # points = torch.transpose(points, 1, 2)   # B * 3 * N
         # points: B * 3 * (N + sum(Ni))
-        pn_feat = self.extractor(points)    # B * 256
+        pn_feat = self.extractor(points)  # B * 256
         if self.use_state:
             state_feat = self.state_mlp(observations[self.state_key])
             return torch.cat([pn_feat, state_feat], dim=-1)
         else:
             return pn_feat
-

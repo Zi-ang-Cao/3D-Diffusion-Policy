@@ -10,15 +10,36 @@ from dexart.env import task_setting
 from dexart.env.sim_env.constructor import add_default_scene_light
 
 
-def create_env(task_name, use_visual_obs, use_gui=False, is_eval=False, pc_seg=False,
-               pc_noise=False, index=-1, img_type=None, rand_pos=0.0, rand_degree=0, frame_skip=10, no_rgb=True,
-               **kwargs):
+def create_env(
+    task_name,
+    use_visual_obs,
+    use_gui=False,
+    is_eval=False,
+    pc_seg=False,
+    pc_noise=False,
+    index=-1,
+    img_type=None,
+    rand_pos=0.0,
+    rand_degree=0,
+    frame_skip=10,
+    no_rgb=True,
+    **kwargs
+):
     robot_name = "allegro_hand_xarm6_wrist_mounted_face_front"
     rotation_reward_weight = 1
-    env_params = dict(robot_name=robot_name, rotation_reward_weight=rotation_reward_weight,
-                      use_visual_obs=use_visual_obs, use_gui=use_gui, no_rgb=no_rgb, use_old_api=True,
-                      index=index, frame_skip=frame_skip, rand_pos=rand_pos, rand_orn=rand_degree / 180 * np.pi,
-                      **kwargs)
+    env_params = dict(
+        robot_name=robot_name,
+        rotation_reward_weight=rotation_reward_weight,
+        use_visual_obs=use_visual_obs,
+        use_gui=use_gui,
+        no_rgb=no_rgb,
+        use_old_api=True,
+        index=index,
+        frame_skip=frame_skip,
+        rand_pos=rand_pos,
+        rand_orn=rand_degree / 180 * np.pi,
+        **kwargs
+    )
     if img_type:
         assert img_type in task_setting.IMG_CONFIG.keys()
 
@@ -29,13 +50,13 @@ def create_env(task_name, use_visual_obs, use_gui=False, is_eval=False, pc_seg=F
     # Specify rendering device if the computing device is given
     if "CUDA_VISIBLE_DEVICES" in os.environ:
         env_params["device"] = "cuda"
-    if task_name == 'faucet':
+    if task_name == "faucet":
         env = FaucetRLEnv(**env_params, friction=5)
-    elif task_name == 'bucket':
+    elif task_name == "bucket":
         env = BucketRLEnv(**env_params, friction=0)
-    elif task_name == 'laptop':
+    elif task_name == "laptop":
         env = LaptopRLEnv(**env_params, friction=5)
-    elif task_name == 'toilet':
+    elif task_name == "toilet":
         env = ToiletRLEnv(**env_params, friction=5)
     else:
         raise NotImplementedError
@@ -54,7 +75,6 @@ def create_env(task_name, use_visual_obs, use_gui=False, is_eval=False, pc_seg=F
     if is_eval:
         env.setup_camera_from_config(task_setting.CAMERA_CONFIG["viz_only"])
         add_default_scene_light(env.scene, env.renderer)
-
 
     # flush cache
     env.action_space

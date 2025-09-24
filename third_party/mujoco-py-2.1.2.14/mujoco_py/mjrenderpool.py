@@ -11,11 +11,13 @@ class RenderPoolStorage:
     Helper object used for storing global data for worker processes.
     """
 
-    __slots__ = ['shared_rgbs_array',
-                 'shared_depths_array',
-                 'device_id',
-                 'sim',
-                 'modder']
+    __slots__ = [
+        "shared_rgbs_array",
+        "shared_depths_array",
+        "device_id",
+        "sim",
+        "modder",
+    ]
 
 
 class MjRenderPool:
@@ -28,9 +30,15 @@ class MjRenderPool:
 
     DEFAULT_MAX_IMAGE_SIZE = 512 * 512  # in pixels
 
-    def __init__(self, model, device_ids=1, n_workers=None,
-                 max_batch_size=None, max_image_size=DEFAULT_MAX_IMAGE_SIZE,
-                 modder=None):
+    def __init__(
+        self,
+        model,
+        device_ids=1,
+        n_workers=None,
+        max_batch_size=None,
+        max_image_size=DEFAULT_MAX_IMAGE_SIZE,
+        modder=None,
+    ):
         """
         Args:
         - model (PyMjModel): MuJoCo model to use for rendering
@@ -53,8 +61,7 @@ class MjRenderPool:
         if isinstance(device_ids, int):
             device_ids = list(range(device_ids))
         else:
-            assert isinstance(device_ids, list), (
-                "device_ids must be list of integer")
+            assert isinstance(device_ids, list), "device_ids must be list of integer"
 
         n_workers = n_workers or 1
         self._max_batch_size = max_batch_size or (len(device_ids) * n_workers)
@@ -66,15 +73,23 @@ class MjRenderPool:
         self._shared_depths = Array(ctypes.c_float, array_size)
 
         self._shared_rgbs_array = np.frombuffer(
-            self._shared_rgbs.get_obj(), dtype=ctypes.c_uint8)
-        assert self._shared_rgbs_array.size == (array_size * 3), (
-            "Array size is %d, expected %d" % (
-                self._shared_rgbs_array.size, array_size * 3))
+            self._shared_rgbs.get_obj(), dtype=ctypes.c_uint8
+        )
+        assert self._shared_rgbs_array.size == (
+            array_size * 3
+        ), "Array size is %d, expected %d" % (
+            self._shared_rgbs_array.size,
+            array_size * 3,
+        )
         self._shared_depths_array = np.frombuffer(
-            self._shared_depths.get_obj(), dtype=ctypes.c_float)
-        assert self._shared_depths_array.size == array_size, (
-            "Array size is %d, expected %d" % (
-                self._shared_depths_array.size, array_size))
+            self._shared_depths.get_obj(), dtype=ctypes.c_float
+        )
+        assert (
+            self._shared_depths_array.size == array_size
+        ), "Array size is %d, expected %d" % (
+            self._shared_depths_array.size,
+            array_size,
+        )
 
         worker_id = Value(ctypes.c_int)
         worker_id.value = 0
@@ -88,7 +103,8 @@ class MjRenderPool:
                 "setting it otherwise):\n"
                 "  import multiprocessing as mp\n"
                 "  if __name__ == '__main__':\n"
-                "    mp.set_start_method('spawn')\n")
+                "    mp.set_start_method('spawn')\n"
+            )
 
         self.pool = Pool(
             processes=len(device_ids) * n_workers,
@@ -99,11 +115,14 @@ class MjRenderPool:
                 device_ids,
                 self._shared_rgbs,
                 self._shared_depths,
-                modder))
+                modder,
+            ),
+        )
 
     @staticmethod
-    def _worker_init(mjb_bytes, worker_id, device_ids,
-                     shared_rgbs, shared_depths, modder):
+    def _worker_init(
+        mjb_bytes, worker_id, device_ids, shared_rgbs, shared_depths, modder
+    ):
         """
         Initializes the global state for the workers.
         """
@@ -114,13 +133,14 @@ class MjRenderPool:
             worker_id.value += 1
         s.device_id = device_ids[proc_worker_id % len(device_ids)]
 
-        s.shared_rgbs_array = np.frombuffer(
-            shared_rgbs.get_obj(), dtype=ctypes.c_uint8)
+        s.shared_rgbs_array = np.frombuffer(shared_rgbs.get_obj(), dtype=ctypes.c_uint8)
         s.shared_depths_array = np.frombuffer(
-            shared_depths.get_obj(), dtype=ctypes.c_float)
+            shared_depths.get_obj(), dtype=ctypes.c_float
+        )
 
         # avoid a circular import
         from mujoco_py import load_model_from_mjb, MjRenderContext, MjSim
+
         s.sim = MjSim(load_model_from_mjb(mjb_bytes))
         # attach a render context to the sim (needs to happen before
         # modder is called, since it might need to upload textures
@@ -137,8 +157,7 @@ class MjRenderPool:
         _render_pool_storage = s
 
     @staticmethod
-    def _worker_render(worker_id, state, width, height,
-                       camera_name, randomize):
+    def _worker_render(worker_id, state, width, height, camera_name, randomize):
         """
         Main target function for the workers.
         """
@@ -156,20 +175,28 @@ class MjRenderPool:
 
         rgb_block = width * height * 3
         rgb_offset = rgb_block * worker_id
-        rgb = s.shared_rgbs_array[rgb_offset:rgb_offset + rgb_block]
+        rgb = s.shared_rgbs_array[rgb_offset : rgb_offset + rgb_block]
         rgb = rgb.reshape(height, width, 3)
 
         depth_block = width * height
         depth_offset = depth_block * worker_id
-        depth = s.shared_depths_array[depth_offset:depth_offset + depth_block]
+        depth = s.shared_depths_array[depth_offset : depth_offset + depth_block]
         depth = depth.reshape(height, width)
 
         rgb[:], depth[:] = s.sim.render(
-            width, height, camera_name=camera_name, depth=True,
-            device_id=s.device_id)
+            width, height, camera_name=camera_name, depth=True, device_id=s.device_id
+        )
 
-    def render(self, width, height, states=None, camera_name=None,
-               depth=False, randomize=False, copy=True):
+    def render(
+        self,
+        width,
+        height,
+        states=None,
+        camera_name=None,
+        depth=False,
+        randomize=False,
+        copy=True,
+    ):
         """
         Renders the simulations in batch. If no states are provided,
         the max_batch_size will be used.
@@ -196,7 +223,8 @@ class MjRenderPool:
         if (width * height) > self._max_image_size:
             raise ValueError(
                 "Requested image larger than maximum image size. Create "
-                "a new RenderPool with a larger maximum image size.")
+                "a new RenderPool with a larger maximum image size."
+            )
         if states is None:
             batch_size = self._max_batch_size
             states = [None] * batch_size
@@ -206,20 +234,24 @@ class MjRenderPool:
         if batch_size > self._max_batch_size:
             raise ValueError(
                 "Requested batch size larger than max batch size. Create "
-                "a new RenderPool with a larger max batch size.")
+                "a new RenderPool with a larger max batch size."
+            )
 
         self.pool.starmap(
             MjRenderPool._worker_render,
-            [(i, state, width, height, camera_name, randomize)
-             for i, state in enumerate(states)])
+            [
+                (i, state, width, height, camera_name, randomize)
+                for i, state in enumerate(states)
+            ],
+        )
 
-        rgbs = self._shared_rgbs_array[:width * height * 3 * batch_size]
+        rgbs = self._shared_rgbs_array[: width * height * 3 * batch_size]
         rgbs = rgbs.reshape(batch_size, height, width, 3)
         if copy:
             rgbs = rgbs.copy()
 
         if depth:
-            depths = self._shared_depths_array[:width * height * batch_size]
+            depths = self._shared_depths_array[: width * height * batch_size]
             depths = depths.reshape(batch_size, height, width).copy()
             if copy:
                 depths = depths.copy()

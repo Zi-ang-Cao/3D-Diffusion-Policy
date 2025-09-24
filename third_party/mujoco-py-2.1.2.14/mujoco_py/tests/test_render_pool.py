@@ -57,8 +57,9 @@ def test_multiprocessing():
     # run the multiprocessing tests manually by running this
     # script as a subprocess
     env = os.environ
-    env['MUJOCO_PY_TEST_ASSET_DIR_PATH'] = abspath(
-        join(dirname(__file__), '..', 'test_imgs'))
+    env["MUJOCO_PY_TEST_ASSET_DIR_PATH"] = abspath(
+        join(dirname(__file__), "..", "test_imgs")
+    )
     subprocess.check_call([sys.executable, __file__], env=env, shell=True)
 
 
@@ -79,7 +80,7 @@ def mp_test_rendering():
 
     images = pool.render(100, 100)
     assert images.shape == (3, 100, 100, 3)
-    compare_imgs(images[0], 'test_render_pool.mp_test_rendering.0.png')
+    compare_imgs(images[0], "test_render_pool.mp_test_rendering.0.png")
     assert np.all(images[0] == images[1])
 
     images, depth = pool.render(101, 103, depth=True)
@@ -95,11 +96,11 @@ def mp_test_cameras():
 
     image = pool.render(100, 100)
     assert image.shape == (1, 100, 100, 3)
-    compare_imgs(image[0], 'test_render_pool.mp_test_cameras.0.png')
+    compare_imgs(image[0], "test_render_pool.mp_test_cameras.0.png")
 
-    image = pool.render(100, 100, camera_name='camera1')
+    image = pool.render(100, 100, camera_name="camera1")
     assert image.shape == (1, 100, 100, 3)
-    compare_imgs(image[0], 'test_render_pool.mp_test_cameras.1.png')
+    compare_imgs(image[0], "test_render_pool.mp_test_cameras.1.png")
 
 
 def mp_test_modder():
@@ -146,20 +147,20 @@ def mp_test_states():
 
     images = pool.render(100, 100, states=states[:2])
     assert images.shape == (2, 100, 100, 3)
-    compare_imgs(images[0], 'test_render_pool.mp_test_states.1.png')
-    compare_imgs(images[1], 'test_render_pool.mp_test_states.2.png')
+    compare_imgs(images[0], "test_render_pool.mp_test_states.1.png")
+    compare_imgs(images[1], "test_render_pool.mp_test_states.2.png")
 
     states = list(reversed(states))
     images = pool.render(100, 100, states=states)
     assert images.shape == (3, 100, 100, 3)
-    compare_imgs(images[0], 'test_render_pool.mp_test_states.3.png')
-    compare_imgs(images[1], 'test_render_pool.mp_test_states.4.png')
-    compare_imgs(images[2], 'test_render_pool.mp_test_states.5.png')
+    compare_imgs(images[0], "test_render_pool.mp_test_states.3.png")
+    compare_imgs(images[1], "test_render_pool.mp_test_states.4.png")
+    compare_imgs(images[2], "test_render_pool.mp_test_states.5.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     mp.freeze_support()
-    mp.set_start_method('spawn')
+    mp.set_start_method("spawn")
 
     mp_test_create_destroy()
     mp_test_rendering()

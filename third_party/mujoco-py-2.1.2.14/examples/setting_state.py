@@ -31,11 +31,13 @@ model = load_model_from_xml(MODEL_XML)
 sim = MjSim(model)
 viewer = MjViewer(sim)
 
-states = [{'box:x': +0.8, 'box:y': +0.8},
-          {'box:x': -0.8, 'box:y': +0.8},
-          {'box:x': -0.8, 'box:y': -0.8},
-          {'box:x': +0.8, 'box:y': -0.8},
-          {'box:x': +0.0, 'box:y': +0.0}]
+states = [
+    {"box:x": +0.8, "box:y": +0.8},
+    {"box:x": -0.8, "box:y": +0.8},
+    {"box:x": -0.8, "box:y": -0.8},
+    {"box:x": +0.8, "box:y": -0.8},
+    {"box:x": +0.0, "box:y": +0.0},
+]
 
 # MjModel.joint_name2id returns the index of a joint in
 # MjData.qpos.
@@ -55,5 +57,5 @@ while True:
         print_box_xpos(sim)
         viewer.render()
 
-    if os.getenv('TESTING') is not None:
+    if os.getenv("TESTING") is not None:
         break

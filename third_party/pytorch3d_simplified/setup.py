@@ -140,7 +140,6 @@ else:
     BuildExtension = torch.utils.cpp_extension.BuildExtension
 
 
-
 setup(
     name="pytorch3d",
     version=__version__,

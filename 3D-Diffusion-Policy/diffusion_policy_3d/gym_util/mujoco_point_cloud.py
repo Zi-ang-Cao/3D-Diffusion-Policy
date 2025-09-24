@@ -16,6 +16,8 @@ Generates numpy rotation matrix from quaternion
 
 @return np_rot_mat: 3x3 rotation matrix as numpy array
 """
+
+
 def quat2Mat(quat):
     if len(quat) != 4:
         print("Quaternion", quat, "invalid when generating transformation matrix.")
@@ -24,15 +26,15 @@ def quat2Mat(quat):
     # Note that the following code snippet can be used to generate the 3x3
     #    rotation matrix, we don't use it because this file should not depend
     #    on mujoco.
-    '''
+    """
     from mujoco_py import functions
     res = np.zeros(9)
     functions.mju_quat2Mat(res, camera_quat)
     res = res.reshape(3,3)
-    '''
+    """
 
     # This function is lifted directly from scipy source code
-    #https://github.com/scipy/scipy/blob/v1.3.0/scipy/spatial/transform/rotation.py#L956
+    # https://github.com/scipy/scipy/blob/v1.3.0/scipy/spatial/transform/rotation.py#L956
     w = quat[0]
     x = quat[1]
     y = quat[2]
@@ -50,11 +52,20 @@ def quat2Mat(quat):
     yz = y * z
     xw = x * w
 
-    rot_mat_arr = [x2 - y2 - z2 + w2, 2 * (xy - zw), 2 * (xz + yw), \
-        2 * (xy + zw), - x2 + y2 - z2 + w2, 2 * (yz - xw), \
-        2 * (xz - yw), 2 * (yz + xw), - x2 - y2 + z2 + w2]
+    rot_mat_arr = [
+        x2 - y2 - z2 + w2,
+        2 * (xy - zw),
+        2 * (xz + yw),
+        2 * (xy + zw),
+        -x2 + y2 - z2 + w2,
+        2 * (yz - xw),
+        2 * (xz - yw),
+        2 * (yz + xw),
+        -x2 - y2 + z2 + w2,
+    ]
     np_rot_mat = rotMatList2NPRotMat(rot_mat_arr)
     return np_rot_mat
+
 
 """
 Generates numpy rotation matrix from rotation matrix as list len(9)
@@ -63,10 +74,13 @@ Generates numpy rotation matrix from rotation matrix as list len(9)
 
 @return np_rot_mat: 3x3 rotation matrix as numpy array
 """
+
+
 def rotMatList2NPRotMat(rot_mat_arr):
     np_rot_arr = np.array(rot_mat_arr)
     np_rot_mat = np_rot_arr.reshape((3, 3))
     return np_rot_mat
+
 
 """
 Generates numpy transformation matrix from position list len(3) and 
@@ -77,11 +91,14 @@ Generates numpy transformation matrix from position list len(3) and
 
 @return t_mat:  4x4 transformation matrix as numpy array
 """
+
+
 def posRotMat2Mat(pos, rot_mat):
     t_mat = np.eye(4)
     t_mat[:3, :3] = rot_mat
     t_mat[:3, 3] = np.array(pos)
     return t_mat
+
 
 """
 Generates Open3D camera intrinsic matrix object from numpy camera intrinsic
@@ -93,21 +110,26 @@ Generates Open3D camera intrinsic matrix object from numpy camera intrinsic
 
 @return t_mat:  4x4 transformation matrix as numpy array
 """
+
+
 def cammat2o3d(cam_mat, width, height):
-    cx = cam_mat[0,2]
-    fx = cam_mat[0,0]
-    cy = cam_mat[1,2]
-    fy = cam_mat[1,1]
+    cx = cam_mat[0, 2]
+    fx = cam_mat[0, 0]
+    cy = cam_mat[1, 2]
+    fy = cam_mat[1, 1]
 
     return o3d.camera.PinholeCameraIntrinsic(width, height, fx, fy, cx, cy)
 
-# 
+
+#
 # and combines them into point clouds
 """
 Class that renders depth images in MuJoCo, processes depth images from
     multiple cameras, converts them to point clouds, and processes the point
     clouds
 """
+
+
 class PointCloudGenerator(object):
     """
     initialization function
@@ -118,7 +140,8 @@ class PointCloudGenerator(object):
     @param max_bound: If not None, list len(3) containing largest x, y, and z
         values that will not be cropped
     """
-    def __init__(self, sim, cam_names:List, img_size=84):
+
+    def __init__(self, sim, cam_names: List, img_size=84):
         super(PointCloudGenerator, self).__init__()
 
         self.sim = sim
@@ -128,16 +151,18 @@ class PointCloudGenerator(object):
         self.img_height = img_size
 
         self.cam_names = cam_names
-        
+
         # List of camera intrinsic matrices
         self.cam_mats = []
-        
+
         for idx in range(len(self.cam_names)):
             # get camera id
             cam_id = self.sim.model.camera_name2id(self.cam_names[idx])
             fovy = math.radians(self.sim.model.cam_fovy[cam_id])
             f = self.img_height / (2 * math.tan(fovy / 2))
-            cam_mat = np.array(((f, 0, self.img_width / 2), (0, f, self.img_height / 2), (0, 0, 1)))
+            cam_mat = np.array(
+                ((f, 0, self.img_width / 2), (0, f, self.img_height / 2), (0, 0, 1))
+            )
             self.cam_mats.append(cam_mat)
 
     def generateCroppedPointCloud(self, save_img_dir=None, device_id=0):
@@ -146,7 +171,9 @@ class PointCloudGenerator(object):
         depths = []
         for cam_i in range(len(self.cam_names)):
             # Render and optionally save image from camera corresponding to cam_i
-            color_img, depth = self.captureImage(self.cam_names[cam_i], capture_depth=True, device_id=device_id)
+            color_img, depth = self.captureImage(
+                self.cam_names[cam_i], capture_depth=True, device_id=device_id
+            )
             depths.append(depth)
             # If directory was provided, save color and depth images
             #    (overwriting previous)
@@ -156,13 +183,17 @@ class PointCloudGenerator(object):
 
             # convert camera matrix and depth image to Open3D format, then
             #    generate point cloud
-            
-            od_cammat = cammat2o3d(self.cam_mats[cam_i], self.img_width, self.img_height)
+
+            od_cammat = cammat2o3d(
+                self.cam_mats[cam_i], self.img_width, self.img_height
+            )
             od_depth = o3d.geometry.Image(depth)
-            
-            o3d_cloud = o3d.geometry.PointCloud.create_from_depth_image(od_depth, od_cammat)
-            
-            # od_color = o3d.geometry.Image(color_img)  # Convert the color image to Open3D format                
+
+            o3d_cloud = o3d.geometry.PointCloud.create_from_depth_image(
+                od_depth, od_cammat
+            )
+
+            # od_color = o3d.geometry.Image(color_img)  # Convert the color image to Open3D format
             # rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(od_color, od_depth)  # Create an RGBD image
             # o3d_cloud = o3d.geometry.PointCloud.create_from_rgbd_image(
             #     rgbd_image,
@@ -189,16 +220,15 @@ class PointCloudGenerator(object):
         # get numpy array of point cloud, (position, color)
         combined_cloud_points = np.asarray(combined_cloud.points)
         # color is automatically normalized to [0,1] by open3d
-        
 
         # combined_cloud_colors = np.asarray(combined_cloud.colors)  # Get the colors, ranging [0,1].
-        combined_cloud_colors = color_img.reshape(-1, 3) # range [0, 255]
-        combined_cloud = np.concatenate((combined_cloud_points, combined_cloud_colors), axis=1)
+        combined_cloud_colors = color_img.reshape(-1, 3)  # range [0, 255]
+        combined_cloud = np.concatenate(
+            (combined_cloud_points, combined_cloud_colors), axis=1
+        )
         depths = np.array(depths).squeeze()
         return combined_cloud, depths
 
-
-     
     # https://github.com/htung0101/table_dome/blob/master/table_dome_calib/utils.py#L160
     def depthimg2Meters(self, depth):
         extent = self.sim.model.stat.extent
@@ -212,7 +242,13 @@ class PointCloudGenerator(object):
 
     # Render and process an image
     def captureImage(self, camera_name, capture_depth=True, device_id=0):
-        rendered_images = self.sim.render(self.img_width, self.img_height, camera_name=camera_name, depth=capture_depth, device_id=device_id)
+        rendered_images = self.sim.render(
+            self.img_width,
+            self.img_height,
+            camera_name=camera_name,
+            depth=capture_depth,
+            device_id=device_id,
+        )
         if capture_depth:
             img, depth = rendered_images
             depth = self.verticalFlip(depth)
@@ -228,7 +264,7 @@ class PointCloudGenerator(object):
     # Normalizes an image so the maximum pixel value is 255,
     # then writes to file
     def saveImg(self, img, filepath, filename):
-        normalized_image = img/img.max()*255
+        normalized_image = img / img.max() * 255
         normalized_image = normalized_image.astype(np.uint8)
         im = PIL_Image.fromarray(normalized_image)
-        im.save(filepath + '/' + filename + ".jpg")
+        im.save(filepath + "/" + filename + ".jpg")

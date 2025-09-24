@@ -13,7 +13,9 @@ Vector3dVector = o3d.utility.Vector3dVector
 Vector3iVector = o3d.utility.Vector3iVector
 
 
-def segment_articulation_from_mask(segmentation: np.ndarray, articulation: sapien.ArticulationBase):
+def segment_articulation_from_mask(
+    segmentation: np.ndarray, articulation: sapien.ArticulationBase
+):
     link_id = [link.get_id() for link in articulation.get_links()]
     min_id = min(link_id)
     max_id = max(link_id)
@@ -21,7 +23,9 @@ def segment_articulation_from_mask(segmentation: np.ndarray, articulation: sapie
     return articulation_mask
 
 
-def render_geometry_to_open3d_mesh(render_shape: sapien.RenderShape, is_collision_mesh, scale):
+def render_geometry_to_open3d_mesh(
+    render_shape: sapien.RenderShape, is_collision_mesh, scale
+):
     mesh = render_shape.mesh
     material = render_shape.material
 
@@ -31,7 +35,9 @@ def render_geometry_to_open3d_mesh(render_shape: sapien.RenderShape, is_collisio
     indices = np.reshape(mesh.indices, [-1, 3]).astype(np.int32)
     normals = mesh.normals
 
-    triangle_mesh = o3d.geometry.TriangleMesh(Vector3dVector(vertices * scale[None, :]), Vector3iVector(indices))
+    triangle_mesh = o3d.geometry.TriangleMesh(
+        Vector3dVector(vertices * scale[None, :]), Vector3iVector(indices)
+    )
     triangle_mesh.vertex_normals = Vector3dVector(normals)
     if is_collision_mesh:
         if has_material:
@@ -39,11 +45,15 @@ def render_geometry_to_open3d_mesh(render_shape: sapien.RenderShape, is_collisio
             triangle_mesh.textures = o3d.geometry.Image(img)
         else:
             vertex_color = material.base_color[:3]
-            triangle_mesh.vertex_colors = Vector3dVector(np.tile(vertex_color, (vertices.shape[0], 1)))
+            triangle_mesh.vertex_colors = Vector3dVector(
+                np.tile(vertex_color, (vertices.shape[0], 1))
+            )
     return triangle_mesh
 
 
-def merge_o3d_meshes(meshes: List[o3d.geometry.TriangleMesh]) -> o3d.geometry.TriangleMesh:
+def merge_o3d_meshes(
+    meshes: List[o3d.geometry.TriangleMesh],
+) -> o3d.geometry.TriangleMesh:
     if len(meshes) < 1:
         raise RuntimeError(f"Need at least one mesh to merge.")
     if len(meshes) == 1:
@@ -56,7 +66,9 @@ def merge_o3d_meshes(meshes: List[o3d.geometry.TriangleMesh]) -> o3d.geometry.Tr
         return combined_mesh
 
 
-def render_body_to_open3d_mesh(render_body: sapien.RenderBody, use_texture=True) -> o3d.geometry.TriangleMesh:
+def render_body_to_open3d_mesh(
+    render_body: sapien.RenderBody, use_texture=True
+) -> o3d.geometry.TriangleMesh:
     body_pose = render_body.local_pose.to_transformation_matrix()
     body_type = render_body.type
     if body_type == "mesh":
@@ -72,15 +84,18 @@ def render_body_to_open3d_mesh(render_body: sapien.RenderBody, use_texture=True)
             indices = np.reshape(mesh.indices, [-1, 3]).astype(np.int32)
             normals = mesh.normals
 
-            triangle_mesh = o3d.geometry.TriangleMesh(Vector3dVector(vertices * scale[None, :]),
-                                                      Vector3iVector(indices))
+            triangle_mesh = o3d.geometry.TriangleMesh(
+                Vector3dVector(vertices * scale[None, :]), Vector3iVector(indices)
+            )
             triangle_mesh.vertex_normals = Vector3dVector(normals)
             if has_material and use_texture:
                 img = cv2.imread(material.diffuse_texture_filename)
                 triangle_mesh.textures = o3d.geometry.Image(img)
             else:
                 vertex_color = material.base_color[:3]
-                triangle_mesh.vertex_colors = Vector3dVector(np.tile(vertex_color, (vertices.shape[0], 1)))
+                triangle_mesh.vertex_colors = Vector3dVector(
+                    np.tile(vertex_color, (vertices.shape[0], 1))
+                )
             meshes.append(triangle_mesh)
         render_body_mesh = merge_o3d_meshes(meshes)
         render_body_mesh.transform(body_pose)
@@ -96,9 +111,12 @@ def render_body_to_open3d_mesh(render_body: sapien.RenderBody, use_texture=True)
             half_length = render_body.half_length
             vertices = render_body.get_render_shapes()[0].mesh.vertices
             normals = render_body.get_render_shapes()[0].mesh.normals
-            indices = np.reshape(render_body.get_render_shapes()[0].mesh.indices, [-1, 3]).astype(np.int32)
-            render_body_mesh = o3d.geometry.TriangleMesh(Vector3dVector(vertices),
-                                                         Vector3iVector(indices))
+            indices = np.reshape(
+                render_body.get_render_shapes()[0].mesh.indices, [-1, 3]
+            ).astype(np.int32)
+            render_body_mesh = o3d.geometry.TriangleMesh(
+                Vector3dVector(vertices), Vector3iVector(indices)
+            )
             render_body_mesh.vertex_normals = Vector3dVector(normals)
         elif body_type == "sphere":
             radius = render_body.radius
@@ -112,7 +130,9 @@ def render_body_to_open3d_mesh(render_body: sapien.RenderBody, use_texture=True)
         else:
             vertex_color = material.base_color[:3]
             num_v = len(render_body_mesh.vertices)
-            render_body_mesh.vertex_colors = Vector3dVector(np.tile(vertex_color, (num_v, 1)))
+            render_body_mesh.vertex_colors = Vector3dVector(
+                np.tile(vertex_color, (num_v, 1))
+            )
 
         # Pose
         render_body_mesh.transform(body_pose)
@@ -120,14 +140,21 @@ def render_body_to_open3d_mesh(render_body: sapien.RenderBody, use_texture=True)
     return render_body_mesh
 
 
-def actor_to_open3d_mesh(actor: sapien.ActorBase, use_collision_mesh=False, use_texture=False, use_actor_pose=False):
+def actor_to_open3d_mesh(
+    actor: sapien.ActorBase,
+    use_collision_mesh=False,
+    use_texture=False,
+    use_actor_pose=False,
+):
     meshes = []
     if not use_collision_mesh:
         for render_body in actor.get_visual_bodies():
             meshes.append(render_body_to_open3d_mesh(render_body, use_texture))
     else:
         for collision_render_body in actor.get_collision_visual_bodies():
-            meshes.append(render_body_to_open3d_mesh(collision_render_body, use_texture))
+            meshes.append(
+                render_body_to_open3d_mesh(collision_render_body, use_texture)
+            )
 
     if len(meshes) > 0:
         mesh = merge_o3d_meshes(meshes)
@@ -139,7 +166,9 @@ def actor_to_open3d_mesh(actor: sapien.ActorBase, use_collision_mesh=False, use_
     return mesh
 
 
-def duplicate_actor_as_vulkan_nodes(actor: sapien.ActorBase, scene: sapien.Scene, use_shadow=True, opacity=None):
+def duplicate_actor_as_vulkan_nodes(
+    actor: sapien.ActorBase, scene: sapien.Scene, use_shadow=True, opacity=None
+):
     render_scene: R.Scene = scene.get_renderer_scene()._internal_scene
     parent_node = render_scene.add_node(parent=None)
     parent_node.set_position(actor.get_pose().p)
@@ -180,12 +209,16 @@ def export_scene_as_multiple_meshes(scene: sapien.Scene, directory: str, init_nu
             if mesh is not None:
                 meshes.append(mesh)
         art_mesh = merge_o3d_meshes(meshes)
-        o3d.io.write_triangle_mesh(f"{directory}/{num:0>3d}.obj", art_mesh, write_ascii=True)
+        o3d.io.write_triangle_mesh(
+            f"{directory}/{num:0>3d}.obj", art_mesh, write_ascii=True
+        )
         num += 1
     return num
 
 
-def set_entity_visibility(entities: List[Union[sapien.ActorBase, sapien.ArticulationBase]], visibility: float):
+def set_entity_visibility(
+    entities: List[Union[sapien.ActorBase, sapien.ArticulationBase]], visibility: float
+):
     for entity in entities:
         if isinstance(entity, sapien.ActorBase):
             for geom in entity.get_visual_bodies():
@@ -198,7 +231,9 @@ def set_entity_visibility(entities: List[Union[sapien.ActorBase, sapien.Articula
             raise ValueError(f"Unrecognized type {type(entity)}")
 
 
-def set_entity_color(entities: List[Union[sapien.ActorBase, sapien.ArticulationBase]], color: List[float]):
+def set_entity_color(
+    entities: List[Union[sapien.ActorBase, sapien.ArticulationBase]], color: List[float]
+):
     if len(color) != 4:
         raise ValueError(f"RGBA Color should be a length 4 iterable")
     for entity in entities:
@@ -219,8 +254,14 @@ def set_entity_color(entities: List[Union[sapien.ActorBase, sapien.ArticulationB
             raise ValueError(f"Unrecognized type {type(entity)}")
 
 
-def add_mesh_to_renderer(scene: sapien.Scene, renderer: sapien.VulkanRenderer, vertex: np.ndarray, faces: np.ndarray,
-                         material: R.Material, parent: Optional[R.Node] = None):
+def add_mesh_to_renderer(
+    scene: sapien.Scene,
+    renderer: sapien.VulkanRenderer,
+    vertex: np.ndarray,
+    faces: np.ndarray,
+    material: R.Material,
+    parent: Optional[R.Node] = None,
+):
     context: R.Context = renderer._internal_context
     render_scene: R.Scene = scene.get_renderer_scene()._internal_scene
     normals = compute_smooth_shading_normal_np(vertex, faces)
@@ -233,13 +274,23 @@ def add_mesh_to_renderer(scene: sapien.Scene, renderer: sapien.VulkanRenderer, v
     return obj
 
 
-def add_line_set_to_renderer(scene: sapien.Scene, renderer: sapien.VulkanRenderer, position: np.ndarray,
-                             connection: np.ndarray, color: np.ndarray = np.ones(4), parent: Optional[R.Node] = None):
+def add_line_set_to_renderer(
+    scene: sapien.Scene,
+    renderer: sapien.VulkanRenderer,
+    position: np.ndarray,
+    connection: np.ndarray,
+    color: np.ndarray = np.ones(4),
+    parent: Optional[R.Node] = None,
+):
     num_point = position.shape[0]
     if connection.shape[1] != 2:
-        raise ValueError(f"Connection should be a mx2 array, but now get {connection.shape}")
+        raise ValueError(
+            f"Connection should be a mx2 array, but now get {connection.shape}"
+        )
     if position.shape[1] != 3:
-        raise ValueError(f"Connection should be a nx3 array, but now get {position.shape}")
+        raise ValueError(
+            f"Connection should be a nx3 array, but now get {position.shape}"
+        )
     if np.max(connection) > num_point:
         raise IndexError(f"Index in connection exceed the number of position")
     context: R.Context = renderer._internal_context
@@ -262,7 +313,12 @@ def test_mesh_function():
 
     builder = scene.create_actor_builder()
     builder.add_box_visual(pose=sapien.Pose([0, 0, 1.5]), half_size=[0.5, 0.5, 0.5])
-    builder.add_capsule_visual(radius=0.1, half_length=0.5, pose=sapien.Pose([0, 0, 3]), color=np.array([1, 0, 0]))
+    builder.add_capsule_visual(
+        radius=0.1,
+        half_length=0.5,
+        pose=sapien.Pose([0, 0, 3]),
+        color=np.array([1, 0, 0]),
+    )
     builder.add_sphere_visual(radius=1)
     builder.add_sphere_collision()
     actor = builder.build()
@@ -272,5 +328,5 @@ def test_mesh_function():
     o3d.visualization.draw_geometries([mesh])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_mesh_function()

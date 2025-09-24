@@ -92,7 +92,7 @@ class ActionRepeatWrapper(dm_env.Environment):
 
 
 class FrameStackWrapper(dm_env.Environment):
-    def __init__(self, env, num_frames, pixels_key='pixels'):
+    def __init__(self, env, num_frames, pixels_key="pixels"):
         self._env = env
         self._num_frames = num_frames
         self._frames = deque([], maxlen=num_frames)
@@ -105,12 +105,15 @@ class FrameStackWrapper(dm_env.Environment):
         # remove batch dim
         if len(pixels_shape) == 4:
             pixels_shape = pixels_shape[1:]
-        self._obs_spec = specs.BoundedArray(shape=np.concatenate(
-            [[pixels_shape[2] * num_frames], pixels_shape[:2]], axis=0),
+        self._obs_spec = specs.BoundedArray(
+            shape=np.concatenate(
+                [[pixels_shape[2] * num_frames], pixels_shape[:2]], axis=0
+            ),
             dtype=np.uint8,
             minimum=0,
             maximum=255,
-            name='observation')
+            name="observation",
+        )
 
     def _transform_observation(self, time_step):
         assert len(self._frames) == self._num_frames
@@ -151,11 +154,13 @@ class ActionDTypeWrapper(dm_env.Environment):
     def __init__(self, env, dtype):
         self._env = env
         wrapped_action_spec = env.action_spec()
-        self._action_spec = specs.BoundedArray(wrapped_action_spec.shape,
-                                               dtype,
-                                               wrapped_action_spec.minimum,
-                                               wrapped_action_spec.maximum,
-                                               'action')
+        self._action_spec = specs.BoundedArray(
+            wrapped_action_spec.shape,
+            dtype,
+            wrapped_action_spec.minimum,
+            wrapped_action_spec.maximum,
+            "action",
+        )
 
     def step(self, action):
         action = action.astype(self._env.action_spec().dtype)
@@ -190,11 +195,13 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
         if action is None:
             action_spec = self.action_spec()
             action = np.zeros(action_spec.shape, dtype=action_spec.dtype)
-        return ExtendedTimeStep(observation=time_step.observation,
-                                step_type=time_step.step_type,
-                                action=action,
-                                reward=time_step.reward or 0.0,
-                                discount=time_step.discount or 1.0)
+        return ExtendedTimeStep(
+            observation=time_step.observation,
+            step_type=time_step.step_type,
+            action=action,
+            reward=time_step.reward or 0.0,
+            discount=time_step.discount or 1.0,
+        )
 
     def observation_spec(self):
         return self._env.observation_spec()
@@ -206,19 +213,36 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
         return getattr(self._env, name)
 
 
-def make_basic_env(env, cam_list=[], from_pixels=False, hybrid_state=None, test_image=False, channels_first=False,
-                   num_repeats=1, num_frames=1):
+def make_basic_env(
+    env,
+    cam_list=[],
+    from_pixels=False,
+    hybrid_state=None,
+    test_image=False,
+    channels_first=False,
+    num_repeats=1,
+    num_frames=1,
+):
     e = GymEnv(env)
     env_kwargs = None
     if from_pixels:  # TODO might want to improve this part
         height = 84
         width = 84
-        latent_dim = height*width*len(cam_list)*3
+        latent_dim = height * width * len(cam_list) * 3
         # RRL class instance is environment wrapper...
-        e = BasicAdroitEnv(e, cameras=cam_list,
-                           height=height, width=width, latent_dim=latent_dim, hybrid_state=hybrid_state,
-                           test_image=test_image, channels_first=channels_first, num_repeats=num_repeats, num_frames=num_frames)
-        env_kwargs = {'rrl_kwargs': e.env_kwargs}
+        e = BasicAdroitEnv(
+            e,
+            cameras=cam_list,
+            height=height,
+            width=width,
+            latent_dim=latent_dim,
+            hybrid_state=hybrid_state,
+            test_image=test_image,
+            channels_first=channels_first,
+            num_repeats=num_repeats,
+            num_frames=num_frames,
+        )
+        env_kwargs = {"rrl_kwargs": e.env_kwargs}
     # if not from pixels... then it's simpler
     return e, env_kwargs
 
@@ -227,26 +251,37 @@ class AdroitEnv:
     metadata = {"render.modes": ["rgb_array"], "video.frames_per_second": 10}
 
     # a wrapper class that will make Adroit env looks like a dmc env
-    def __init__(self, env_name, test_image=False, cam_list=None,
-                 num_repeats=2, num_frames=1, env_feature_type='pixels', device='cuda', reward_rescale=True,
-                 use_point_cloud=False):
-        if '-v0' not in env_name:  # compatibility with gym env name
-            env_name += '-v0'
+    def __init__(
+        self,
+        env_name,
+        test_image=False,
+        cam_list=None,
+        num_repeats=2,
+        num_frames=1,
+        env_feature_type="pixels",
+        device="cuda",
+        reward_rescale=True,
+        use_point_cloud=False,
+    ):
+        if "-v0" not in env_name:  # compatibility with gym env name
+            env_name += "-v0"
         default_env_to_cam_list = {
-            'hammer-v0': ['top'],
-            'door-v0': ['top'],
-            'pen-v0': ['vil_camera'],
+            "hammer-v0": ["top"],
+            "door-v0": ["top"],
+            "pen-v0": ["vil_camera"],
             # 'relocate-v0': ['cam1', 'cam2', 'cam3',],
-            'relocate-v0': ['cam1',],
+            "relocate-v0": [
+                "cam1",
+            ],
         }
         if cam_list is None:
             cam_list = default_env_to_cam_list[env_name]
         self.env_name = env_name
         reward_rescale_dict = {
-            'hammer-v0': 1/100,
-            'door-v0': 1/20,
-            'pen-v0': 1/50,
-            'relocate-v0': 1/30,
+            "hammer-v0": 1 / 100,
+            "door-v0": 1 / 20,
+            "pen-v0": 1 / 50,
+            "relocate-v0": 1 / 30,
         }
         if reward_rescale:
             self.reward_rescale_factor = reward_rescale_dict[env_name]
@@ -256,26 +291,45 @@ class AdroitEnv:
         # env, _ = make_basic_env(env_name, cam_list=cam_list, from_pixels=from_pixels, hybrid_state=True,
         #     test_image=test_image, channels_first=True, num_repeats=num_repeats, num_frames=num_frames)
         env = GymEnv(env_name)
-        if env_feature_type == 'state':
+        if env_feature_type == "state":
             raise NotImplementedError("state env not ready")
-        elif env_feature_type == 'resnet18' or env_feature_type == 'resnet34':
+        elif env_feature_type == "resnet18" or env_feature_type == "resnet34":
             # TODO maybe we will just throw everything into it..
             height = 256
             width = 256
             latent_dim = 512
-            env = BasicAdroitEnv(env, cameras=cam_list,
-                                 height=height, width=width, latent_dim=latent_dim, hybrid_state=True,
-                                 test_image=test_image, channels_first=False, num_repeats=num_repeats, num_frames=num_frames, encoder_type=env_feature_type,
-                                 device=device
-                                 )
-        elif env_feature_type == 'pixels':
+            env = BasicAdroitEnv(
+                env,
+                cameras=cam_list,
+                height=height,
+                width=width,
+                latent_dim=latent_dim,
+                hybrid_state=True,
+                test_image=test_image,
+                channels_first=False,
+                num_repeats=num_repeats,
+                num_frames=num_frames,
+                encoder_type=env_feature_type,
+                device=device,
+            )
+        elif env_feature_type == "pixels":
             height = 84
             width = 84
-            latent_dim = height*width*len(cam_list)*num_frames
+            latent_dim = height * width * len(cam_list) * num_frames
             # RRL class instance is environment wrapper...
-            env = BasicAdroitEnv(env, cameras=cam_list,
-                                 height=height, width=width, latent_dim=latent_dim, hybrid_state=True,
-                                 test_image=test_image, channels_first=True, num_repeats=num_repeats, num_frames=num_frames, device=device)
+            env = BasicAdroitEnv(
+                env,
+                cameras=cam_list,
+                height=height,
+                width=width,
+                latent_dim=latent_dim,
+                hybrid_state=True,
+                test_image=test_image,
+                channels_first=True,
+                num_repeats=num_repeats,
+                num_frames=num_frames,
+                device=device,
+            )
         else:
             raise ValueError("env feature not supported")
 
@@ -286,53 +340,56 @@ class AdroitEnv:
         self.horizon = env.spec.horizon
         number_channel = len(cam_list) * 3 * num_frames
 
-        if env_feature_type == 'pixels':
-            self._obs_spec = specs.BoundedArray(shape=(
-                number_channel, 84, 84), dtype='uint8', name='observation', minimum=0, maximum=255)
+        if env_feature_type == "pixels":
+            self._obs_spec = specs.BoundedArray(
+                shape=(number_channel, 84, 84),
+                dtype="uint8",
+                name="observation",
+                minimum=0,
+                maximum=255,
+            )
             self._obs_sensor_spec = specs.Array(
-                shape=(self.obs_sensor_dim,), dtype='float32', name='observation_sensor')
-        elif env_feature_type == 'resnet18' or env_feature_type == 'resnet34':
-            self._obs_spec = specs.Array(shape=(
-                512 * num_frames * len(cam_list),), dtype='float32', name='observation')  # TODO fix magic number
+                shape=(self.obs_sensor_dim,), dtype="float32", name="observation_sensor"
+            )
+        elif env_feature_type == "resnet18" or env_feature_type == "resnet34":
+            self._obs_spec = specs.Array(
+                shape=(512 * num_frames * len(cam_list),),
+                dtype="float32",
+                name="observation",
+            )  # TODO fix magic number
             self._obs_sensor_spec = specs.Array(
-                shape=(self.obs_sensor_dim,), dtype='float32', name='observation_sensor')
-        self._action_spec = specs.BoundedArray(shape=(
-            self.act_dim,), dtype='float32', name='action', minimum=-1.0, maximum=1.0)
+                shape=(self.obs_sensor_dim,), dtype="float32", name="observation_sensor"
+            )
+        self._action_spec = specs.BoundedArray(
+            shape=(self.act_dim,),
+            dtype="float32",
+            name="action",
+            minimum=-1.0,
+            maximum=1.0,
+        )
 
         # for diffusion policy codebase
         self.action_space = spaces.Box(
-            low=-1.0,
-            high=1.0,
-            shape=(self.act_dim,),
-            dtype=np.float64
+            low=-1.0, high=1.0, shape=(self.act_dim,), dtype=np.float64
         )
-        self.observation_space = spaces.Dict({
-            'image': spaces.Box(
-                low=0,
-                high=1,
-                shape=(number_channel, 84, 84),
-                dtype=np.float32
-            ),
-            'depth': spaces.Box(
-                low=0,
-                high=1,
-                shape=(84, 84),
-                dtype=np.float32
-            ),
-            'agent_pos': spaces.Box(
-                low=-np.inf,
-                high=np.inf,
-                shape=(self.obs_sensor_dim,),
-                dtype=np.float32
-            ),
-        })
+        self.observation_space = spaces.Dict(
+            {
+                "image": spaces.Box(
+                    low=0, high=1, shape=(number_channel, 84, 84), dtype=np.float32
+                ),
+                "depth": spaces.Box(low=0, high=1, shape=(84, 84), dtype=np.float32),
+                "agent_pos": spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(self.obs_sensor_dim,),
+                    dtype=np.float32,
+                ),
+            }
+        )
 
         if use_point_cloud:
-            self.observation_space['point_cloud'] = spaces.Box(
-                low=-np.inf,
-                high=np.inf,
-                shape=(1024, 6),
-                dtype=np.float32
+            self.observation_space["point_cloud"] = spaces.Box(
+                low=-np.inf, high=np.inf, shape=(1024, 6), dtype=np.float32
             )
 
     def reset(self):
@@ -342,10 +399,7 @@ class AdroitEnv:
         action_spec = self.action_spec()
         action = np.zeros(action_spec.shape, dtype=action_spec.dtype)
 
-        obs_dict = {
-            'image': obs_pixels,
-            'agent_pos': obs_sensor
-        }
+        obs_dict = {"image": obs_pixels, "agent_pos": obs_sensor}
         return obs_dict
 
     def get_current_obs_without_reset(self):
@@ -355,14 +409,16 @@ class AdroitEnv:
         action_spec = self.action_spec()
         action = np.zeros(action_spec.shape, dtype=action_spec.dtype)
 
-        time_step = ExtendedTimeStepAdroit(observation=obs_pixels,
-                                           observation_sensor=obs_sensor,
-                                           step_type=StepType.FIRST,
-                                           action=action,
-                                           reward=0.0,
-                                           discount=1.0,
-                                           n_goal_achieved=0,
-                                           time_limit_reached=False)
+        time_step = ExtendedTimeStepAdroit(
+            observation=obs_pixels,
+            observation_sensor=obs_sensor,
+            step_type=StepType.FIRST,
+            action=action,
+            reward=0.0,
+            discount=1.0,
+            n_goal_achieved=0,
+            time_limit_reached=False,
+        )
         return time_step
 
     def get_pixels_with_width_height(self, w, h):
@@ -376,8 +432,12 @@ class AdroitEnv:
         obs_sensor = obs_sensor.astype(np.float32)
 
         discount = 1.0
-        n_goal_achieved = env_info['n_goal_achieved']
-        time_limit_reached = env_info['TimeLimit.truncated'] if 'TimeLimit.truncated' in env_info else False
+        n_goal_achieved = env_info["n_goal_achieved"]
+        time_limit_reached = (
+            env_info["TimeLimit.truncated"]
+            if "TimeLimit.truncated" in env_info
+            else False
+        )
         if done:
             steptype = StepType.LAST
         else:
@@ -389,8 +449,8 @@ class AdroitEnv:
         reward = reward * self.reward_rescale_factor
 
         obs_dict = {
-            'image': obs_pixels,  # (3, 84, 84), [0,255], uint8
-            'agent_pos': obs_sensor  # (24,)
+            "image": obs_pixels,  # (3, 84, 84), [0,255], uint8
+            "agent_pos": obs_sensor,  # (24,)
         }
 
         return obs_dict, reward, done, env_info
@@ -417,7 +477,7 @@ class AdroitEnv:
         self.np_random = np.random.default_rng(seed)
 
     def render(self, mode):
-        assert mode == 'rgb_array'
+        assert mode == "rgb_array"
         img = self.get_pixels_with_width_height(84, 84)
         # make it channel last
         img = np.transpose(img, (1, 2, 0))  # it has been 0-255

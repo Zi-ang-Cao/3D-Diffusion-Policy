@@ -1,4 +1,4 @@
-'''
+"""
 EXPERIMENTAL:  Displays MuJoCo model in VR.
 
 Based on http://www.mujoco.org/book/source/mjvive.cpp
@@ -15,8 +15,7 @@ Requires HTC Vive, Windows, and OpenVR.
 
 Install openvr python module with:
     pip install openvr
-'''
-
+"""
 
 import math
 import os
@@ -26,15 +25,25 @@ import numpy as np
 import OpenGL.GL as gl
 from mujoco_py import functions
 from mujoco_py.builder import mujoco_path
-from mujoco_py.cymj import (MjRenderContext, MjSim, load_model_from_xml,
-                            PyMjrRect, PyMjvCamera)
-from mujoco_py.generated.const import (CAT_ALL, FB_OFFSCREEN, FONT_BIG,
-                                       GRID_BOTTOMLEFT, STEREO_SIDEBYSIDE)
+from mujoco_py.cymj import (
+    MjRenderContext,
+    MjSim,
+    load_model_from_xml,
+    PyMjrRect,
+    PyMjvCamera,
+)
+from mujoco_py.generated.const import (
+    CAT_ALL,
+    FB_OFFSCREEN,
+    FONT_BIG,
+    GRID_BOTTOMLEFT,
+    STEREO_SIDEBYSIDE,
+)
 
 
 # Normally global variables aren't used like this in python,
 # but we want to be as close as possible to the original file.
-class HMD():  # anonymous object we can set fields on
+class HMD:  # anonymous object we can set fields on
     pass
 
 
@@ -45,9 +54,9 @@ hmd = HMD()
 
 
 def initMuJoCo(filename, width2, height):
-    ''' load model, init simulation and rendering '''
+    """load model, init simulation and rendering"""
     global window, sim, ctx
-    assert glfw.init(), 'Could not initialize GLFW'
+    assert glfw.init(), "Could not initialize GLFW"
     glfw.window_hint(glfw.SAMPLES, 0)
     glfw.window_hint(glfw.DOUBLEBUFFER, True)
     glfw.window_hint(glfw.RESIZABLE, 0)
@@ -70,7 +79,7 @@ def initMuJoCo(filename, width2, height):
 
 
 def v_initPre():
-    ''' init vr before MuJoCo init '''
+    """init vr before MuJoCo init"""
     global hmd
     hmd.system = openvr.init(openvr.VRApplication_Scene)
     hmd.roompos = np.zeros(3)
@@ -83,7 +92,7 @@ def v_initPre():
 
 
 def v_initPost():
-    ''' init vr after MuJoCo init '''
+    """init vr after MuJoCo init"""
     global hmd
     for n in range(2):
         znear, zfar = 0.05, 50.0
@@ -100,53 +109,102 @@ def v_initPost():
     gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
     gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
     gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
-    gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA8, 2 * hmd.width, hmd.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, None)
+    gl.glTexImage2D(
+        gl.GL_TEXTURE_2D,
+        0,
+        gl.GL_RGBA8,
+        2 * hmd.width,
+        hmd.height,
+        0,
+        gl.GL_RGBA,
+        gl.GL_UNSIGNED_BYTE,
+        None,
+    )
     hmd.poses = (openvr.TrackedDevicePose_t * openvr.k_unMaxTrackedDeviceCount)()
-    hmd.boundLeft = openvr.VRTextureBounds_t(0., 0., 0.5, 1.)
-    hmd.boundRight = openvr.VRTextureBounds_t(0.5, 0., 1., 1.)
-    hmd.vTex = openvr.Texture_t(hmd.idtex, openvr.TextureType_OpenGL, openvr.ColorSpace_Gamma)
+    hmd.boundLeft = openvr.VRTextureBounds_t(0.0, 0.0, 0.5, 1.0)
+    hmd.boundRight = openvr.VRTextureBounds_t(0.5, 0.0, 1.0, 1.0)
+    hmd.vTex = openvr.Texture_t(
+        hmd.idtex, openvr.TextureType_OpenGL, openvr.ColorSpace_Gamma
+    )
 
 
 def v_update():
-    ''' update vr poses and controller states '''
+    """update vr poses and controller states"""
     global ctx, hmd
-    openvr.VRCompositor().waitGetPoses(hmd.poses, openvr.k_unMaxTrackedDeviceCount, None, 0)
-    m = np.array(hmd.poses[openvr.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking.m)
+    openvr.VRCompositor().waitGetPoses(
+        hmd.poses, openvr.k_unMaxTrackedDeviceCount, None, 0
+    )
+    m = np.array(
+        hmd.poses[openvr.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking.m
+    )
     hmd.roompos, hmd.roommat = m[0:3, 3], m[0:3, 0:3]
     for n in range(2):
-        ctx.scn.camera[n].pos[:] = hmd.roompos + np.matmul(hmd.roommat, hmd.eyeoffset[n])
+        ctx.scn.camera[n].pos[:] = hmd.roompos + np.matmul(
+            hmd.roommat, hmd.eyeoffset[n]
+        )
         ctx.scn.camera[n].forward[0:3] = -hmd.roommat[:, 2]
         ctx.scn.camera[n].up[0:3] = hmd.roommat[:, 1]
 
 
 def v_render():
-    ''' render to vr and window '''
+    """render to vr and window"""
     global hmd, ctx, window
     # resolve multi-sample offscreen buffer
     gl.glBindFramebuffer(gl.GL_READ_FRAMEBUFFER, ctx.con.offFBO)
     gl.glReadBuffer(gl.GL_COLOR_ATTACHMENT0)
     gl.glBindFramebuffer(gl.GL_DRAW_FRAMEBUFFER, ctx.con.offFBO_r)
     gl.glDrawBuffer(gl.GL_COLOR_ATTACHMENT0)
-    gl.glBlitFramebuffer(0, 0, 2 * hmd.width, hmd.height,
-                         0, 0, 2 * hmd.width, hmd.height,
-                         gl.GL_COLOR_BUFFER_BIT, gl.GL_NEAREST)
+    gl.glBlitFramebuffer(
+        0,
+        0,
+        2 * hmd.width,
+        hmd.height,
+        0,
+        0,
+        2 * hmd.width,
+        hmd.height,
+        gl.GL_COLOR_BUFFER_BIT,
+        gl.GL_NEAREST,
+    )
     # blit to window, left only, window is half-size
     gl.glBindFramebuffer(gl.GL_READ_FRAMEBUFFER, ctx.con.offFBO_r)
     gl.glReadBuffer(gl.GL_COLOR_ATTACHMENT0)
     gl.glBindFramebuffer(gl.GL_DRAW_FRAMEBUFFER, 0)
     gl.glDrawBuffer(gl.GL_BACK if ctx.con.windowDoublebuffer else gl.GL_FRONT)
-    gl.glBlitFramebuffer(0, 0, hmd.width, hmd.height,
-                         0, 0, hmd.width // 2, hmd.height // 2,
-                         gl.GL_COLOR_BUFFER_BIT, gl.GL_NEAREST)
+    gl.glBlitFramebuffer(
+        0,
+        0,
+        hmd.width,
+        hmd.height,
+        0,
+        0,
+        hmd.width // 2,
+        hmd.height // 2,
+        gl.GL_COLOR_BUFFER_BIT,
+        gl.GL_NEAREST,
+    )
     # blit to vr texture
     gl.glActiveTexture(gl.GL_TEXTURE2)
     gl.glBindFramebuffer(gl.GL_DRAW_FRAMEBUFFER, ctx.con.offFBO_r)
-    gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT1, gl.GL_TEXTURE_2D, hmd.idtex, 0)
+    gl.glFramebufferTexture2D(
+        gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT1, gl.GL_TEXTURE_2D, hmd.idtex, 0
+    )
     gl.glDrawBuffer(gl.GL_COLOR_ATTACHMENT1)
-    gl.glBlitFramebuffer(0, 0, 2 * hmd.width, hmd.height,
-                         0, 0, 2 * hmd.width, hmd.height,
-                         gl.GL_COLOR_BUFFER_BIT, gl.GL_NEAREST)
-    gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT1, gl.GL_TEXTURE_2D, 0, 0)
+    gl.glBlitFramebuffer(
+        0,
+        0,
+        2 * hmd.width,
+        hmd.height,
+        0,
+        0,
+        2 * hmd.width,
+        hmd.height,
+        gl.GL_COLOR_BUFFER_BIT,
+        gl.GL_NEAREST,
+    )
+    gl.glFramebufferTexture2D(
+        gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT1, gl.GL_TEXTURE_2D, 0, 0
+    )
     gl.glDrawBuffer(gl.GL_COLOR_ATTACHMENT0)
     openvr.VRCompositor().submit(openvr.Eye_Left, hmd.vTex, hmd.boundLeft)
     openvr.VRCompositor().submit(openvr.Eye_Right, hmd.vTex, hmd.boundRight)
@@ -156,8 +214,8 @@ def v_render():
     gl.glFlush()
 
 
-if __name__ == '__main__':
-    filename = os.path.join(mujoco_path, 'model', 'humanoid.xml')
+if __name__ == "__main__":
+    filename = os.path.join(mujoco_path, "model", "humanoid.xml")
     v_initPre()
     initMuJoCo(filename, hmd.width * 2, hmd.height)
     v_initPost()
@@ -171,13 +229,17 @@ if __name__ == '__main__':
 
     while not glfw.window_should_close(window):
         if sim.data.time - frametime > 1 / FPS or sim.data.time < frametime:
-            functions.mjv_updateScene(sim.model, sim.data, ctx.vopt, ctx.pert, nullCam, CAT_ALL, ctx.scn)
+            functions.mjv_updateScene(
+                sim.model, sim.data, ctx.vopt, ctx.pert, nullCam, CAT_ALL, ctx.scn
+            )
             v_update()
             functions.mjr_setBuffer(FB_OFFSCREEN, ctx.con)
             functions.mjr_render(viewFull, ctx.scn, ctx.con)
-            FPS = .9 * FPS + .1 / (glfw.get_time() - lasttm)
+            FPS = 0.9 * FPS + 0.1 / (glfw.get_time() - lasttm)
             lasttm = glfw.get_time()
-            functions.mjr_overlay(FONT_BIG, GRID_BOTTOMLEFT, viewFull, 'FPS %.1f' % FPS, '', ctx.con)
+            functions.mjr_overlay(
+                FONT_BIG, GRID_BOTTOMLEFT, viewFull, "FPS %.1f" % FPS, "", ctx.con
+            )
             v_render()
             frametime = sim.data.time
         sim.step()

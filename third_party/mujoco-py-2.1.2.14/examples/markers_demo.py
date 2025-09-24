@@ -30,10 +30,9 @@ step = 0
 while True:
     t = time.time()
     x, y = math.cos(t), math.sin(t)
-    viewer.add_marker(pos=np.array([x, y, 1]),
-                      label=str(t))
+    viewer.add_marker(pos=np.array([x, y, 1]), label=str(t))
     viewer.render()
 
     step += 1
-    if step > 100 and os.getenv('TESTING') is not None:
+    if step > 100 and os.getenv("TESTING") is not None:
         break

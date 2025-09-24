@@ -38,8 +38,7 @@ class MjViewerBasic(cymj.MjRenderContextWindow):
         self._scale = framebuffer_width * 1.0 / window_width
 
         glfw.set_cursor_pos_callback(self.window, self._cursor_pos_callback)
-        glfw.set_mouse_button_callback(
-            self.window, self._mouse_button_callback)
+        glfw.set_mouse_button_callback(self.window, self._mouse_button_callback)
         glfw.set_scroll_callback(self.window, self._scroll_callback)
         glfw.set_key_callback(self.window, self.key_callback)
 
@@ -72,8 +71,9 @@ class MjViewerBasic(cymj.MjRenderContextWindow):
 
         # Determine whether to move, zoom or rotate view
         mod_shift = (
-            glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS or
-            glfw.get_key(window, glfw.KEY_RIGHT_SHIFT) == glfw.PRESS)
+            glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS
+            or glfw.get_key(window, glfw.KEY_RIGHT_SHIFT) == glfw.PRESS
+        )
         if self._button_right_pressed:
             action = const.MOUSE_MOVE_H if mod_shift else const.MOUSE_MOVE_V
         elif self._button_left_pressed:
@@ -94,9 +94,11 @@ class MjViewerBasic(cymj.MjRenderContextWindow):
 
     def _mouse_button_callback(self, window, button, act, mods):
         self._button_left_pressed = (
-            glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT) == glfw.PRESS)
+            glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT) == glfw.PRESS
+        )
         self._button_right_pressed = (
-            glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_RIGHT) == glfw.PRESS)
+            glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_RIGHT) == glfw.PRESS
+        )
 
         x, y = glfw.get_cursor_pos(window)
         self._last_mouse_x = int(self._scale * x)
@@ -184,8 +186,9 @@ class MjViewer(MjViewerBasic):
                 frame = self._read_pixels_as_in_window()
                 self._video_queue.put(frame)
             else:
-                self._time_per_render = 0.9 * self._time_per_render + \
-                    0.1 * (time.time() - render_start)
+                self._time_per_render = 0.9 * self._time_per_render + 0.1 * (
+                    time.time() - render_start
+                )
 
         self._user_overlay = copy.deepcopy(self._overlay)
         # Render the same frame if paused.
@@ -198,8 +201,11 @@ class MjViewer(MjViewerBasic):
         else:
             # inner_loop runs "_loop_count" times in expectation (where "_loop_count" is a float).
             # Therefore, frames are displayed in the real-time.
-            self._loop_count += self.sim.model.opt.timestep * self.sim.nsubsteps / \
-                (self._time_per_render * self._run_speed)
+            self._loop_count += (
+                self.sim.model.opt.timestep
+                * self.sim.nsubsteps
+                / (self._time_per_render * self._run_speed)
+            )
             if self._render_every_frame:
                 self._loop_count = 1
             while self._loop_count > 0:
@@ -212,7 +218,9 @@ class MjViewer(MjViewerBasic):
     def _read_pixels_as_in_window(self, resolution=None):
         # Reads pixels with markers and overlay from the same camera as screen.
         if resolution is None:
-            resolution = glfw.get_framebuffer_size(self.sim._render_context_window.window)
+            resolution = glfw.get_framebuffer_size(
+                self.sim._render_context_window.window
+            )
 
         resolution = np.array(resolution)
         resolution = resolution * min(1000 / np.min(resolution), 1)
@@ -223,9 +231,11 @@ class MjViewer(MjViewerBasic):
         offscreen_ctx = self.sim._render_context_offscreen
         window_ctx = self.sim._render_context_window
         # Save markers and overlay from offscreen.
-        saved = [copy.deepcopy(offscreen_ctx._markers),
-                 copy.deepcopy(offscreen_ctx._overlay),
-                 rec_copy(offscreen_ctx.cam)]
+        saved = [
+            copy.deepcopy(offscreen_ctx._markers),
+            copy.deepcopy(offscreen_ctx._overlay),
+            rec_copy(offscreen_ctx.cam),
+        ]
         # Copy markers and overlay from window.
         offscreen_ctx._markers[:] = window_ctx._markers[:]
         offscreen_ctx._overlay.clear()
@@ -233,7 +243,7 @@ class MjViewer(MjViewerBasic):
         rec_assign(offscreen_ctx.cam, rec_copy(window_ctx.cam))
 
         img = self.sim.render(*resolution)
-        img = img[::-1, :, :] # Rendered images are upside-down.
+        img = img[::-1, :, :]  # Rendered images are upside-down.
         # Restore markers and overlay to offscreen.
         offscreen_ctx._markers[:] = saved[0][:]
         offscreen_ctx._overlay.clear()
@@ -245,33 +255,52 @@ class MjViewer(MjViewerBasic):
         if self._render_every_frame:
             self.add_overlay(const.GRID_TOPLEFT, "", "")
         else:
-            self.add_overlay(const.GRID_TOPLEFT, "Run speed = %.3f x real time" %
-                             self._run_speed, "[S]lower, [F]aster")
+            self.add_overlay(
+                const.GRID_TOPLEFT,
+                "Run speed = %.3f x real time" % self._run_speed,
+                "[S]lower, [F]aster",
+            )
         self.add_overlay(
-            const.GRID_TOPLEFT, "Ren[d]er every frame", "Off" if self._render_every_frame else "On")
-        self.add_overlay(const.GRID_TOPLEFT, "Switch camera (#cams = %d)" % (self._ncam + 1),
-                                             "[Tab] (camera ID = %d)" % self.cam.fixedcamid)
-        self.add_overlay(const.GRID_TOPLEFT, "[C]ontact forces", "Off" if self.vopt.flags[
-                         10] == 1 else "On")
+            const.GRID_TOPLEFT,
+            "Ren[d]er every frame",
+            "Off" if self._render_every_frame else "On",
+        )
         self.add_overlay(
-            const.GRID_TOPLEFT, "Referenc[e] frames", "Off" if self.vopt.frame == 1 else "On")
-        self.add_overlay(const.GRID_TOPLEFT,
-                         "T[r]ansparent", "On" if self._transparent else "Off")
+            const.GRID_TOPLEFT,
+            "Switch camera (#cams = %d)" % (self._ncam + 1),
+            "[Tab] (camera ID = %d)" % self.cam.fixedcamid,
+        )
         self.add_overlay(
-            const.GRID_TOPLEFT, "Display [M]ocap bodies", "On" if self._show_mocap else "Off")
+            const.GRID_TOPLEFT,
+            "[C]ontact forces",
+            "Off" if self.vopt.flags[10] == 1 else "On",
+        )
+        self.add_overlay(
+            const.GRID_TOPLEFT,
+            "Referenc[e] frames",
+            "Off" if self.vopt.frame == 1 else "On",
+        )
+        self.add_overlay(
+            const.GRID_TOPLEFT, "T[r]ansparent", "On" if self._transparent else "Off"
+        )
+        self.add_overlay(
+            const.GRID_TOPLEFT,
+            "Display [M]ocap bodies",
+            "On" if self._show_mocap else "Off",
+        )
         if self._paused is not None:
             if not self._paused:
                 self.add_overlay(const.GRID_TOPLEFT, "Stop", "[Space]")
             else:
                 self.add_overlay(const.GRID_TOPLEFT, "Start", "[Space]")
-            self.add_overlay(const.GRID_TOPLEFT,
-                             "Advance simulation by one step", "[right arrow]")
+            self.add_overlay(
+                const.GRID_TOPLEFT, "Advance simulation by one step", "[right arrow]"
+            )
         self.add_overlay(const.GRID_TOPLEFT, "[H]ide Menu", "")
         if self._record_video:
             ndots = int(7 * (time.time() % 1))
             dots = ("." * ndots) + (" " * (6 - ndots))
-            self.add_overlay(const.GRID_TOPLEFT,
-                             "Record [V]ideo (On) " + dots, "")
+            self.add_overlay(const.GRID_TOPLEFT, "Record [V]ideo (On) " + dots, "")
         else:
             self.add_overlay(const.GRID_TOPLEFT, "Record [V]ideo (Off) ", "")
         if self._video_idx > 0:
@@ -287,13 +316,19 @@ class MjViewer(MjViewerBasic):
             extra = " (while video is not recorded)"
         else:
             extra = ""
-        self.add_overlay(const.GRID_BOTTOMLEFT, "FPS", "%d%s" %
-                         (1 / self._time_per_render, extra))
-        self.add_overlay(const.GRID_BOTTOMLEFT, "Solver iterations", str(
-            self.sim.data.solver_iter + 1))
+        self.add_overlay(
+            const.GRID_BOTTOMLEFT, "FPS", "%d%s" % (1 / self._time_per_render, extra)
+        )
+        self.add_overlay(
+            const.GRID_BOTTOMLEFT,
+            "Solver iterations",
+            str(self.sim.data.solver_iter + 1),
+        )
         step = round(self.sim.data.time / self.sim.model.opt.timestep)
         self.add_overlay(const.GRID_BOTTOMRIGHT, "Step", str(step))
-        self.add_overlay(const.GRID_BOTTOMRIGHT, "timestep", "%.5f" % self.sim.model.opt.timestep)
+        self.add_overlay(
+            const.GRID_BOTTOMRIGHT, "timestep", "%.5f" % self.sim.model.opt.timestep
+        )
         self.add_overlay(const.GRID_BOTTOMRIGHT, "n_substeps", str(self.sim.nsubsteps))
         self.add_overlay(const.GRID_TOPLEFT, "Toggle geomgroup visibility", "0-4")
 
@@ -314,13 +349,16 @@ class MjViewer(MjViewerBasic):
         elif key == glfw.KEY_RIGHT and self._paused is not None:
             self._advance_by_one_step = True
             self._paused = True
-        elif key == glfw.KEY_V or \
-                (key == glfw.KEY_ESCAPE and self._record_video):  # Records video. Trigers with V or if in progress by ESC.
+        elif key == glfw.KEY_V or (
+            key == glfw.KEY_ESCAPE and self._record_video
+        ):  # Records video. Trigers with V or if in progress by ESC.
             self._record_video = not self._record_video
             if self._record_video:
-                fps = (1 / self._time_per_render)
-                self._video_process = Process(target=save_video,
-                                  args=(self._video_queue, self._video_path % self._video_idx, fps))
+                fps = 1 / self._time_per_render
+                self._video_process = Process(
+                    target=save_video,
+                    args=(self._video_queue, self._video_path % self._video_idx, fps),
+                )
                 self._video_process.start()
             if not self._record_video:
                 self._video_queue.put(None)
@@ -331,8 +369,9 @@ class MjViewer(MjViewerBasic):
             imageio.imwrite(self._image_path % self._image_idx, img)
             self._image_idx += 1
         elif key == glfw.KEY_I:  # drops in debugger.
-            print('You can access the simulator by self.sim')
+            print("You can access the simulator by self.sim")
             import ipdb
+
             ipdb.set_trace()
         elif key == glfw.KEY_S:  # Slows down simulation.
             self._run_speed /= 2.0
@@ -360,15 +399,18 @@ class MjViewer(MjViewerBasic):
                         if body_idx1 == body_idx2:
                             if not self._show_mocap:
                                 # Store transparency for later to show it.
-                                self.sim.extras[
-                                    geom_idx] = self.sim.model.geom_rgba[geom_idx, 3]
+                                self.sim.extras[geom_idx] = self.sim.model.geom_rgba[
+                                    geom_idx, 3
+                                ]
                                 self.sim.model.geom_rgba[geom_idx, 3] = 0
                             else:
-                                self.sim.model.geom_rgba[
-                                    geom_idx, 3] = self.sim.extras[geom_idx]
+                                self.sim.model.geom_rgba[geom_idx, 3] = self.sim.extras[
+                                    geom_idx
+                                ]
         elif key in (glfw.KEY_0, glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4):
             self.vopt.geomgroup[key - glfw.KEY_0] ^= 1
         super().key_callback(window, key, scancode, action, mods)
+
 
 # Separate Process to save video. This way visualization is
 # less slowed down.

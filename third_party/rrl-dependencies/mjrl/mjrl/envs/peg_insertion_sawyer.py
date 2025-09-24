@@ -8,7 +8,7 @@ class PegEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
         self.peg_sid = -2
         self.target_sid = -1
-        mujoco_env.MujocoEnv.__init__(self, 'peg_insertion.xml', 4)
+        mujoco_env.MujocoEnv.__init__(self, "peg_insertion.xml", 4)
         utils.EzPickle.__init__(self)
         self.peg_sid = self.model.site_name2id("peg_bottom")
         self.target_sid = self.model.site_name2id("target")
@@ -21,12 +21,14 @@ class PegEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return obs, reward, False, self.get_env_infos()
 
     def get_obs(self):
-        return np.concatenate([
-            self.data.qpos.flat,
-            self.data.qvel.flat,
-            self.data.site_xpos[self.peg_sid],
-            self.data.site_xpos[self.target_sid],
-        ])
+        return np.concatenate(
+            [
+                self.data.qpos.flat,
+                self.data.qvel.flat,
+                self.data.site_xpos[self.peg_sid],
+                self.data.site_xpos[self.target_sid],
+            ]
+        )
 
     def get_reward(self, obs, act=None):
         obs = np.clip(obs, -10.0, 10.0)
@@ -43,7 +45,7 @@ class PegEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             l1_dist = np.sum(np.abs(hand_pos - target_pos), axis=-1)
             l2_dist = np.linalg.norm(hand_pos - target_pos, axis=-1)
         bonus = 5.0 * (l2_dist < 0.06)
-        reward = - l1_dist - 5.0 * l2_dist + bonus
+        reward = -l1_dist - 5.0 * l2_dist + bonus
         return reward
 
     def compute_path_rewards(self, paths):
@@ -65,9 +67,9 @@ class PegEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         # Randomize goal position
         goal_y = self.np_random.uniform(low=0.1, high=0.5)
         try:
-            self.model.body_pos[-1,1] = self.init_body_pos[-1,1] + (goal_y-0.29)
-            self.model.body_pos[-2,1] = self.init_body_pos[-2,1] + (goal_y-0.29)
-            self.model.body_pos[-3,1] = self.init_body_pos[-3,1] + (goal_y-0.29)
+            self.model.body_pos[-1, 1] = self.init_body_pos[-1, 1] + (goal_y - 0.29)
+            self.model.body_pos[-2, 1] = self.init_body_pos[-2, 1] + (goal_y - 0.29)
+            self.model.body_pos[-3, 1] = self.init_body_pos[-3, 1] + (goal_y - 0.29)
             self.sim.forward()
         except:
             pass
@@ -86,21 +88,22 @@ class PegEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     def get_env_state(self):
         target_pos = self.model.body_pos[-1].copy()
-        return dict(qp=self.data.qpos.copy(), qv=self.data.qvel.copy(),
-                    target_pos=target_pos)
+        return dict(
+            qp=self.data.qpos.copy(), qv=self.data.qvel.copy(), target_pos=target_pos
+        )
 
     def set_env_state(self, state):
         self.sim.reset()
-        qp = state['qp'].copy()
-        qv = state['qv'].copy()
-        target_pos = state['target_pos']
+        qp = state["qp"].copy()
+        qv = state["qv"].copy()
+        target_pos = state["target_pos"]
         self.model.body_pos[-1] = target_pos
         goal_y = target_pos[1]
         self.data.qpos[:] = qp
         self.data.qvel[:] = qv
-        self.model.body_pos[-1,1] = self.init_body_pos[-1,1] + (goal_y-0.29)
-        self.model.body_pos[-2,1] = self.init_body_pos[-2,1] + (goal_y-0.29)
-        self.model.body_pos[-3,1] = self.init_body_pos[-3,1] + (goal_y-0.29)
+        self.model.body_pos[-1, 1] = self.init_body_pos[-1, 1] + (goal_y - 0.29)
+        self.model.body_pos[-2, 1] = self.init_body_pos[-2, 1] + (goal_y - 0.29)
+        self.model.body_pos[-3, 1] = self.init_body_pos[-3, 1] + (goal_y - 0.29)
         self.sim.forward()
 
     # --------------------------------
@@ -114,4 +117,4 @@ class PegEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.viewer = MjViewer(self.sim)
         self.viewer.cam.azimuth += 200
         self.sim.forward()
-        self.viewer.cam.distance = self.model.stat.extent*2.0
+        self.viewer.cam.distance = self.model.stat.extent * 2.0

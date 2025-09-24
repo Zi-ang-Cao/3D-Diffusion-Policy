@@ -7,10 +7,18 @@ from gym import spaces
 from torch.nn import functional as F
 
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy, BasePolicy, \
-    MultiInputActorCriticPolicy
+from stable_baselines3.common.policies import (
+    ActorCriticCnnPolicy,
+    ActorCriticPolicy,
+    BasePolicy,
+    MultiInputActorCriticPolicy,
+)
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
-from stable_baselines3.common.utils import explained_variance, get_schedule_fn, update_learning_rate
+from stable_baselines3.common.utils import (
+    explained_variance,
+    get_schedule_fn,
+    update_learning_rate,
+)
 
 
 class AdaptiveScheduler:
@@ -92,34 +100,34 @@ class PPO(OnPolicyAlgorithm):
     }
 
     def __init__(
-            self,
-            policy: Union[str, Type[ActorCriticPolicy]],
-            env: Union[GymEnv, str],
-            learning_rate: Union[float, Schedule] = 3e-4,
-            n_steps: int = 2048,
-            batch_size: int = 64,
-            n_epochs: int = 10,
-            gamma: float = 0.99,
-            gae_lambda: float = 0.95,
-            clip_range: Union[float, Schedule] = 0.2,
-            clip_range_vf: Union[None, float, Schedule] = None,
-            normalize_advantage: bool = True,
-            ent_coef: float = 0.0,
-            vf_coef: float = 0.5,
-            max_grad_norm: float = 0.5,
-            use_sde: bool = False,
-            sde_sample_freq: int = -1,
-            target_kl: Optional[float] = None,
-            tensorboard_log: Optional[str] = None,
-            create_eval_env: bool = False,
-            policy_kwargs: Optional[Dict[str, Any]] = None,
-            verbose: int = 0,
-            seed: Optional[int] = None,
-            device: Union[th.device, str] = "auto",
-            _init_setup_model: bool = True,
-            adaptive_kl: float = 0.02,
-            min_lr=1e-4,
-            max_lr=1e-3,
+        self,
+        policy: Union[str, Type[ActorCriticPolicy]],
+        env: Union[GymEnv, str],
+        learning_rate: Union[float, Schedule] = 3e-4,
+        n_steps: int = 2048,
+        batch_size: int = 64,
+        n_epochs: int = 10,
+        gamma: float = 0.99,
+        gae_lambda: float = 0.95,
+        clip_range: Union[float, Schedule] = 0.2,
+        clip_range_vf: Union[None, float, Schedule] = None,
+        normalize_advantage: bool = True,
+        ent_coef: float = 0.0,
+        vf_coef: float = 0.5,
+        max_grad_norm: float = 0.5,
+        use_sde: bool = False,
+        sde_sample_freq: int = -1,
+        target_kl: Optional[float] = None,
+        tensorboard_log: Optional[str] = None,
+        create_eval_env: bool = False,
+        policy_kwargs: Optional[Dict[str, Any]] = None,
+        verbose: int = 0,
+        seed: Optional[int] = None,
+        device: Union[th.device, str] = "auto",
+        _init_setup_model: bool = True,
+        adaptive_kl: float = 0.02,
+        min_lr=1e-4,
+        max_lr=1e-3,
     ):
 
         super().__init__(
@@ -153,7 +161,7 @@ class PPO(OnPolicyAlgorithm):
         # because of the advantage normalization
         if normalize_advantage:
             assert (
-                    batch_size > 1
+                batch_size > 1
             ), "`batch_size` must be greater than 1. See https://github.com/DLR-RM/stable-baselines3/issues/440"
 
         if self.env is not None:
@@ -161,7 +169,7 @@ class PPO(OnPolicyAlgorithm):
             # when doing advantage normalization
             buffer_size = self.env.num_envs * self.n_steps
             assert (
-                    buffer_size > 1
+                buffer_size > 1
             ), f"`n_steps * n_envs` must be greater than 1. Currently n_steps={self.n_steps} and n_envs={self.env.num_envs}"
             # Check that the rollout buffer size is a multiple of the mini-batch size
             untruncated_batches = buffer_size // batch_size
@@ -180,8 +188,12 @@ class PPO(OnPolicyAlgorithm):
         self.clip_range_vf = clip_range_vf
         self.normalize_advantage = normalize_advantage
         self.target_kl = target_kl
-        self.kl_scheduler = AdaptiveScheduler(kl_threshold=adaptive_kl, min_lr=min_lr, max_lr=max_lr,
-                                              init_lr=learning_rate)
+        self.kl_scheduler = AdaptiveScheduler(
+            kl_threshold=adaptive_kl,
+            min_lr=min_lr,
+            max_lr=max_lr,
+            init_lr=learning_rate,
+        )
 
         if _init_setup_model:
             self._setup_model()
@@ -193,7 +205,10 @@ class PPO(OnPolicyAlgorithm):
         self.clip_range = get_schedule_fn(self.clip_range)
         if self.clip_range_vf is not None:
             if isinstance(self.clip_range_vf, (float, int)):
-                assert self.clip_range_vf > 0, "`clip_range_vf` must be positive, " "pass `None` to deactivate vf clipping"
+                assert self.clip_range_vf > 0, (
+                    "`clip_range_vf` must be positive, "
+                    "pass `None` to deactivate vf clipping"
+                )
 
             self.clip_range_vf = get_schedule_fn(self.clip_range_vf)
 
@@ -234,7 +249,9 @@ class PPO(OnPolicyAlgorithm):
                 if self.use_sde:
                     self.policy.reset_noise(self.batch_size)
 
-                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
+                values, log_prob, entropy = self.policy.evaluate_actions(
+                    rollout_data.observations, actions
+                )
                 values = values.flatten()
 
                 # Calculate approximate form of reverse KL Divergence for early stopping
@@ -243,12 +260,17 @@ class PPO(OnPolicyAlgorithm):
                 # and Schulman blog: http://joschu.net/blog/kl-approx.html
                 with th.no_grad():
                     log_ratio = log_prob - rollout_data.old_log_prob
-                    approx_kl_div = th.mean((th.exp(log_ratio) - 1) - log_ratio).cpu().numpy()
+                    approx_kl_div = (
+                        th.mean((th.exp(log_ratio) - 1) - log_ratio).cpu().numpy()
+                    )
                     approx_kl_divs.append(approx_kl_div)
 
                 n_iter = self._n_updates // self.n_epochs
-                scheduling = max(0.99 ** n_iter, 0.05) * 10
-                if self.target_kl is not None and approx_kl_div > 1.5 * self.target_kl * scheduling:
+                scheduling = max(0.99**n_iter, 0.05) * 10
+                if (
+                    self.target_kl is not None
+                    and approx_kl_div > 1.5 * self.target_kl * scheduling
+                ):
                     # continue_training = False
                     num_early_stopping += 1
                     # if self.verbose >= 1:
@@ -258,14 +280,18 @@ class PPO(OnPolicyAlgorithm):
                 # Normalize advantage
                 advantages = rollout_data.advantages
                 if self.normalize_advantage:
-                    advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+                    advantages = (advantages - advantages.mean()) / (
+                        advantages.std() + 1e-8
+                    )
 
                 # ratio between old and new policy, should be one at the first iteration
                 ratio = th.exp(log_prob - rollout_data.old_log_prob)
 
                 # clipped surrogate loss
                 policy_loss_1 = advantages * ratio
-                policy_loss_2 = advantages * th.clamp(ratio, 1 - clip_range, 1 + clip_range)
+                policy_loss_2 = advantages * th.clamp(
+                    ratio, 1 - clip_range, 1 + clip_range
+                )
                 policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
 
                 # Logging
@@ -295,7 +321,11 @@ class PPO(OnPolicyAlgorithm):
 
                 entropy_losses.append(entropy_loss.item())
 
-                loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
+                loss = (
+                    policy_loss
+                    + self.ent_coef * entropy_loss
+                    + self.vf_coef * value_loss
+                )
 
                 lr = self.kl_scheduler.update(approx_kl_div)
                 update_learning_rate(self.policy.optimizer, lr)
@@ -304,15 +334,22 @@ class PPO(OnPolicyAlgorithm):
                 self.policy.optimizer.zero_grad()
                 loss.backward()
                 # Clip grad norm
-                th.nn.utils.clip_grad_norm_(filter(lambda p: p.requires_grad, self.policy.parameters()), self.max_grad_norm)
+                th.nn.utils.clip_grad_norm_(
+                    filter(lambda p: p.requires_grad, self.policy.parameters()),
+                    self.max_grad_norm,
+                )
                 self.policy.optimizer.step()
 
             if not continue_training:
                 break
         if self.verbose >= 1:
-            print(f"Early stopping / mini batch update:  {num_early_stopping} / {num_batch_update}")
+            print(
+                f"Early stopping / mini batch update:  {num_early_stopping} / {num_batch_update}"
+            )
         self._n_updates += self.n_epochs
-        explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
+        explained_var = explained_variance(
+            self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten()
+        )
         # Logs
         self.logger.record("train/entropy_loss", np.mean(entropy_losses))
         self.logger.record("train/policy_gradient_loss", np.mean(pg_losses))
@@ -320,7 +357,9 @@ class PPO(OnPolicyAlgorithm):
         self.logger.record("train/approx_kl", np.mean(approx_kl_divs))
         self.logger.record("train/clip_fraction", np.mean(clip_fractions))
         self.logger.record("train/explained_variance", explained_var)
-        self.logger.record("rollout/skipped_minibatch", num_early_stopping / num_batch_update)
+        self.logger.record(
+            "rollout/skipped_minibatch", num_early_stopping / num_batch_update
+        )
         if hasattr(self.policy, "log_std"):
             self.logger.record("train/std", th.exp(self.policy.log_std).mean().item())
 
@@ -330,18 +369,18 @@ class PPO(OnPolicyAlgorithm):
             self.logger.record("train/clip_range_vf", clip_range_vf)
 
     def learn(
-            self,
-            total_timesteps: int,
-            callback: MaybeCallback = None,
-            log_interval: int = 1,
-            eval_env: Optional[GymEnv] = None,
-            eval_freq: int = -1,
-            n_eval_episodes: int = 5,
-            tb_log_name: str = "PPO",
-            eval_log_path: Optional[str] = None,
-            reset_num_timesteps: bool = True,
-            iter_start=0,
-            **kwargs
+        self,
+        total_timesteps: int,
+        callback: MaybeCallback = None,
+        log_interval: int = 1,
+        eval_env: Optional[GymEnv] = None,
+        eval_freq: int = -1,
+        n_eval_episodes: int = 5,
+        tb_log_name: str = "PPO",
+        eval_log_path: Optional[str] = None,
+        reset_num_timesteps: bool = True,
+        iter_start=0,
+        **kwargs,
     ) -> "PPO":
 
         return super().learn(

@@ -25,7 +25,6 @@ python examples/agents/keyboard_agent.py LunarLander-v2
 Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
 """
 
-
 import math
 import sys
 import numpy as np

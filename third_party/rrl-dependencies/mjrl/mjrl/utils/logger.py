@@ -1,11 +1,13 @@
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 import pickle
 import os
 import csv
+
 
 class DataLog:
 
@@ -26,16 +28,16 @@ class DataLog:
 
     def save_log(self, save_path):
         # TODO: Validate all lengths are the same.
-        pickle.dump(self.log, open(save_path + '/log.pickle', 'wb'))
-        with open(save_path + '/log.csv', 'w') as csv_file:
+        pickle.dump(self.log, open(save_path + "/log.pickle", "wb"))
+        with open(save_path + "/log.csv", "w") as csv_file:
             fieldnames = list(self.log.keys())
-            if 'iteration' not in fieldnames:
-                fieldnames = ['iteration'] + fieldnames
+            if "iteration" not in fieldnames:
+                fieldnames = ["iteration"] + fieldnames
 
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
             for row in range(self.max_len):
-                row_dict = {'iteration': row}
+                row_dict = {"iteration": row}
                 for key in self.log.keys():
                     if row < len(self.log[key]):
                         row_dict[key] = self.log[key][row]
@@ -53,11 +55,12 @@ class DataLog:
             self.log[key] = self.log[key][:num_entries]
 
         self.max_len = num_entries
-        assert min([len(series) for series in self.log.values()]) == \
-            max([len(series) for series in self.log.values()])
+        assert min([len(series) for series in self.log.values()]) == max(
+            [len(series) for series in self.log.values()]
+        )
 
     def read_log(self, log_path):
-        assert log_path.endswith('log.csv')
+        assert log_path.endswith("log.csv")
 
         with open(log_path) as csv_file:
             reader = csv.DictReader(csv_file)
@@ -73,8 +76,10 @@ class DataLog:
                     except:
                         print("ERROR on reading key {}: {}".format(key, row_dict[key]))
 
-                if 'iteration' in data and data['iteration'][-1] != row:
-                    raise RuntimeError("Iteration %d mismatch -- possibly corrupted logfile?" % row)
+                if "iteration" in data and data["iteration"][-1] != row:
+                    raise RuntimeError(
+                        "Iteration %d mismatch -- possibly corrupted logfile?" % row
+                    )
 
         self.log = data
         self.max_len = max(len(v) for k, v in self.log.items())

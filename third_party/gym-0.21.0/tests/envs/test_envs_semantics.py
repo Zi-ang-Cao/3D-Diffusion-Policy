@@ -3,7 +3,6 @@ Currently disabled since this was done in a very poor way
 Hashed str representation of objects
 """
 
-
 import json
 import hashlib
 import os

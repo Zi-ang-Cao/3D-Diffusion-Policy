@@ -15,9 +15,20 @@ from dexart.env import task_setting
 
 
 class LaptopRLEnv(LaptopEnv, BaseRLEnv):
-    def __init__(self, use_gui=False, frame_skip=5, robot_name="adroit_hand_free", friction=5, index=0, rand_pos=0.0,
-                 rand_orn=0.0, **renderer_kwargs):
-        super().__init__(use_gui, frame_skip, friction=friction, index=index, **renderer_kwargs)
+    def __init__(
+        self,
+        use_gui=False,
+        frame_skip=5,
+        robot_name="adroit_hand_free",
+        friction=5,
+        index=0,
+        rand_pos=0.0,
+        rand_orn=0.0,
+        **renderer_kwargs,
+    ):
+        super().__init__(
+            use_gui, frame_skip, friction=friction, index=index, **renderer_kwargs
+        )
         # ============== status definition ==============
         self.instance_init_pos = None
         self.robot_init_pose = None
@@ -25,11 +36,13 @@ class LaptopRLEnv(LaptopEnv, BaseRLEnv):
         self.finger_tip_pos = None
         self.rand_pos = rand_pos
         self.rand_orn = rand_orn
-        self.target_progress = 0.8 # original 0.95
+        self.target_progress = 0.8  # original 0.95
         # ============== will not change during training and randomize instance ==============
         self.robot_name = robot_name
         self.setup(robot_name)
-        self.robot_init_pose = sapien.Pose(np.array([-0.5, 0, 0]), transforms3d.euler.euler2quat(0, 0, 0))
+        self.robot_init_pose = sapien.Pose(
+            np.array([-0.5, 0, 0]), transforms3d.euler.euler2quat(0, 0, 0)
+        )
         self.robot.set_pose(self.robot_init_pose)
         self.configure_robot_contact_reward()
         self.robot_annotation = self.setup_robot_annotation(robot_name)
@@ -40,17 +53,36 @@ class LaptopRLEnv(LaptopEnv, BaseRLEnv):
         for i, link in enumerate(self.finger_tip_links):
             self.finger_tip_pos[i] = self.finger_tip_links[i].get_pose().p
         check_contact_links = self.finger_contact_links + [self.palm_link]
-        finger_contact_boolean = self.check_actor_pair_contacts(check_contact_links, self.handle_link)
-        self.robot_object_contact[:] = np.clip(np.bincount(self.finger_contact_ids, weights=finger_contact_boolean), 0,
-                                               1)
-        arm_contact_boolean = self.check_actors_pair_contacts(self.arm_contact_links, self.instance_links)
+        finger_contact_boolean = self.check_actor_pair_contacts(
+            check_contact_links, self.handle_link
+        )
+        self.robot_object_contact[:] = np.clip(
+            np.bincount(self.finger_contact_ids, weights=finger_contact_boolean), 0, 1
+        )
+        arm_contact_boolean = self.check_actors_pair_contacts(
+            self.arm_contact_links, self.instance_links
+        )
         self.is_arm_contact = np.sum(arm_contact_boolean)
-        self.loosen_contact = np.sum(self.robot_object_contact[:-1]) >= 1 or self.robot_object_contact[-1]
-        self.is_contact = np.sum(self.robot_object_contact[:-1]) >= 2 and self.robot_object_contact[-1]
+        self.loosen_contact = (
+            np.sum(self.robot_object_contact[:-1]) >= 1 or self.robot_object_contact[-1]
+        )
+        self.is_contact = (
+            np.sum(self.robot_object_contact[:-1]) >= 2
+            and self.robot_object_contact[-1]
+        )
         self.robot_qpos_vec = self.robot.get_qpos()
 
-        openness = abs(self.instance.get_qpos()[0] - self.joint_limits_dict[str(self.index)]['middle'])
-        total = abs(self.joint_limits_dict[str(self.index)]['left'] - self.joint_limits_dict[str(self.index)]['middle']) - self.init_open_rad
+        openness = abs(
+            self.instance.get_qpos()[0]
+            - self.joint_limits_dict[str(self.index)]["middle"]
+        )
+        total = (
+            abs(
+                self.joint_limits_dict[str(self.index)]["left"]
+                - self.joint_limits_dict[str(self.index)]["middle"]
+            )
+            - self.init_open_rad
+        )
         self.progress = 1 - openness / total
         self.handle_pose = self.get_handle_global_pose()
         self.palm_pose = self.palm_link.get_pose()
@@ -70,20 +102,33 @@ class LaptopRLEnv(LaptopEnv, BaseRLEnv):
         self.is_eval_done = (self.progress > self.target_progress) and (self.state == 3)
 
     def get_oracle_state(self):
-        return np.concatenate([
-            self.robot_qpos_vec, self.palm_v, self.palm_w, self.palm_pose.p,
-            [float(self.current_step) / float(self.horizon)]
-        ])
+        return np.concatenate(
+            [
+                self.robot_qpos_vec,
+                self.palm_v,
+                self.palm_w,
+                self.palm_pose.p,
+                [float(self.current_step) / float(self.horizon)],
+            ]
+        )
 
     def get_robot_state(self):
-        return np.concatenate([
-            self.robot_qpos_vec, self.palm_v, self.palm_w, self.palm_pose.p, [float(self.current_step) / float(self.horizon)]
-        ])
+        return np.concatenate(
+            [
+                self.robot_qpos_vec,
+                self.palm_v,
+                self.palm_w,
+                self.palm_pose.p,
+                [float(self.current_step) / float(self.horizon)],
+            ]
+        )
 
     def get_reward(self, action):
         reward = 0
         if self.state == 1:
-            reward = -0.1 * min(np.linalg.norm(self.palm_pose.p - self.handle_pose.p), 0.5)  # encourage palm be close to handle
+            reward = -0.1 * min(
+                np.linalg.norm(self.palm_pose.p - self.handle_pose.p), 0.5
+            )  # encourage palm be close to handle
             if self.progress < 0:
                 reward += 0.5 * self.progress
         elif self.state == 2:
@@ -98,24 +143,34 @@ class LaptopRLEnv(LaptopEnv, BaseRLEnv):
         if self.early_done:
             reward += (self.horizon - self.current_step) * 1.2 * self.progress
         action_penalty = np.sum(np.clip(self.robot.get_qvel(), -1, 1) ** 2) * 0.01
-        controller_penalty = (self.cartesian_error ** 2) * 1e3
+        controller_penalty = (self.cartesian_error**2) * 1e3
         reward -= 0.01 * (action_penalty + controller_penalty)
         return reward
 
-    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):
+    def reset(
+        self,
+        *,
+        seed: Optional[int] = None,
+        return_info: bool = False,
+        options: Optional[dict] = None,
+    ):
         # reset status
         self.robot.set_pose(self.robot_init_pose)
         # reset changeable status if randomize instance
-        self.reset_internal()   # change instance if randomize instance
+        self.reset_internal()  # change instance if randomize instance
         if self.need_flush_when_change_instance and self.change_instance_when_reset:
             self.flush_imagination_config()
 
         if self.robot_annotation.__contains__(str(self.index)):
-            self.instance_init_pos = self.robot.get_pose().p + np.array(self.robot_annotation[str(self.index)])
+            self.instance_init_pos = self.robot.get_pose().p + np.array(
+                self.robot_annotation[str(self.index)]
+            )
         else:
             self.instance_init_pos = self.pos
         self.pos = self.instance_init_pos
-        pos = self.pos + np.random.random(3) * self.rand_pos  # can add noise here to randomize loaded position
+        pos = (
+            self.pos + np.random.random(3) * self.rand_pos
+        )  # can add noise here to randomize loaded position
         random_orn = (np.random.rand() * 2 - 1) * self.rand_orn
         orn = transforms3d.euler.euler2quat(0, 0, random_orn)
         self.instance.set_root_pose(sapien.Pose(pos, orn))
@@ -126,7 +181,12 @@ class LaptopRLEnv(LaptopEnv, BaseRLEnv):
     def setup_robot_annotation(self, robot_name: str):
         # here we load robot2laptop
         current_dir = Path(__file__).parent
-        self.pos_path = current_dir.parent.parent.parent / "assets" / "annotation" / f"laptop_{robot_name}_relative_position.json"
+        self.pos_path = (
+            current_dir.parent.parent.parent
+            / "assets"
+            / "annotation"
+            / f"laptop_{robot_name}_relative_position.json"
+        )
         if not os.path.exists(self.pos_path):
             return dict()
         else:

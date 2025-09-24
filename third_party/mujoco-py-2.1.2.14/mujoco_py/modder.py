@@ -2,12 +2,13 @@
 Utilites for changing textures and materials after creating a
 MuJoCo simulation. This allows for super fast scene generation.
 """
+
 from collections import defaultdict
 import numpy as np
 from mujoco_py import cymj
 
 
-class BaseModder():
+class BaseModder:
 
     def __init__(self, sim, random_state=None):
         self.sim = sim
@@ -108,8 +109,7 @@ class CameraModder(BaseModder):
 
     def set_quat(self, name, value):
         value = list(value)
-        assert len(value) == 4, (
-            "Expectd value of length 3, instead got %s" % value)
+        assert len(value) == 4, "Expectd value of length 3, instead got %s" % value
         camid = self.get_camid(name)
         assert camid > -1, "Unknown camera %s" % name
         self.model.cam_quat[camid] = value
@@ -121,8 +121,7 @@ class CameraModder(BaseModder):
 
     def set_pos(self, name, value):
         value = list(value)
-        assert len(value) == 3, (
-            "Expected value of length 3, instead got %s" % value)
+        assert len(value) == 3, "Expected value of length 3, instead got %s" % value
         camid = self.get_camid(name)
         assert camid > -1
         self.model.cam_pos[camid] = value
@@ -190,7 +189,7 @@ class MaterialModder(BaseModder):
         self.set_texrepeat(name, repeat_x, repeat_y)
 
     def get_mat_id(self, name):
-        """ Returns the material id based on the geom name. """
+        """Returns the material id based on the geom name."""
         geom_id = self.model.geom_name2id(name)
         return self.model.geom_matid[geom_id]
 
@@ -214,8 +213,7 @@ class TextureModder(BaseModder):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.textures = [Texture(self.model, i)
-                         for i in range(self.model.ntex)]
+        self.textures = [Texture(self.model, i) for i in range(self.model.ntex)]
         self._build_tex_geom_map()
 
         # These matrices will be used to rapidly synthesize
@@ -223,7 +221,7 @@ class TextureModder(BaseModder):
         self._cache_checker_matrices()
 
     def get_texture(self, name):
-        if name == 'skybox':
+        if name == "skybox":
             tex_id = -1
             for i in range(self.model.ntex):
                 # TODO: Don't hardcode this
@@ -243,7 +241,7 @@ class TextureModder(BaseModder):
         return texture
 
     def get_checker_matrices(self, name):
-        if name == 'skybox':
+        if name == "skybox":
             return self._skybox_checker_mat
         else:
             geom_id = self.model.geom_name2id(name)
@@ -373,8 +371,7 @@ class TextureModder(BaseModder):
 
     def get_rand_rgb(self, n=1):
         def _rand_rgb():
-            return np.array(self.random_state.uniform(size=3) * 255,
-                            dtype=np.uint8)
+            return np.array(self.random_state.uniform(size=3) * 255, dtype=np.uint8)
 
         if n == 1:
             return _rand_rgb()
@@ -432,15 +429,15 @@ class TextureModder(BaseModder):
 
 
 # From mjtTexture
-MJT_TEXTURE_ENUM = ['2d', 'cube', 'skybox']
+MJT_TEXTURE_ENUM = ["2d", "cube", "skybox"]
 
 
-class Texture():
+class Texture:
     """
     Helper class for operating on the MuJoCo textures.
     """
 
-    __slots__ = ['id', 'type', 'height', 'width', 'tex_adr', 'tex_rgb']
+    __slots__ = ["id", "type", "height", "width", "tex_adr", "tex_rgb"]
 
     def __init__(self, model, tex_id):
         self.id = tex_id
@@ -453,5 +450,5 @@ class Texture():
     @property
     def bitmap(self):
         size = self.height * self.width * 3
-        data = self.tex_rgb[self.tex_adr:self.tex_adr + size]
+        data = self.tex_rgb[self.tex_adr : self.tex_adr + size]
         return data.reshape((self.height, self.width, 3))

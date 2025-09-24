@@ -4,12 +4,17 @@ import numpy as np
 from sapien import core as sapien
 
 
-def is_link_group_contact(scene: sapien.Scene, actors1: List[sapien.Actor], actors2: List[sapien.Actor]) -> bool:
+def is_link_group_contact(
+    scene: sapien.Scene, actors1: List[sapien.Actor], actors2: List[sapien.Actor]
+) -> bool:
     actor_set1 = set(actors1)
     actor_set2 = set(actors2)
     for contact in scene.get_contacts():
         contact_actors = {contact.actor0, contact.actor1}
-        if len(actor_set1 & contact_actors) > 0 and len(actor_set2 & contact_actors) > 0:
+        if (
+            len(actor_set1 & contact_actors) > 0
+            and len(actor_set2 & contact_actors) > 0
+        ):
             impulse = [point.impulse for point in contact.points]
             if np.sum(np.abs(impulse)) < 1e-6:
                 continue

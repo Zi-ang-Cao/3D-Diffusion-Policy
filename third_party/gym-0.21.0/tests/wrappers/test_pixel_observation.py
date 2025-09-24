@@ -1,6 +1,5 @@
 """Tests for the pixel observation wrapper."""
 
-
 import pytest
 import numpy as np
 

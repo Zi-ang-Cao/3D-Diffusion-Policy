@@ -18,6 +18,7 @@ class LazyFrames(object):
         lz4_compress (bool): use lz4 to compress the frames internally
 
     """
+
     __slots__ = ("frame_shape", "dtype", "shape", "lz4_compress", "_frames")
 
     def __init__(self, frames, lz4_compress=False):

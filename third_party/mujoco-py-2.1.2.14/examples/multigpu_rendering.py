@@ -2,6 +2,7 @@
 This is an example for rendering on multiple GPUs in parallel,
 using the multiprocessing module.
 """
+
 from multiprocessing import set_start_method
 from time import perf_counter
 
@@ -27,13 +28,15 @@ def main():
         pool.render(IMAGE_WIDTH, IMAGE_HEIGHT)
 
     t = perf_counter() - start_t
-    print("Completed in %.1fs: %.3fms, %.1f FPS" % (
-            t, t / (N_FRAMES * N_SIMS) * 1000, (N_FRAMES * N_SIMS) / t),
-          flush=True)
+    print(
+        "Completed in %.1fs: %.3fms, %.1f FPS"
+        % (t, t / (N_FRAMES * N_SIMS) * 1000, (N_FRAMES * N_SIMS) / t),
+        flush=True,
+    )
 
     print("main(): finished", flush=True)
 
 
 if __name__ == "__main__":
-    set_start_method('spawn')
+    set_start_method("spawn")
     main()

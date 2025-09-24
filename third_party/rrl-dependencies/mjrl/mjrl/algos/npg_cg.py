@@ -1,4 +1,5 @@
 import logging
+
 logging.disable(logging.CRITICAL)
 import numpy as np
 import scipy as sp
@@ -21,17 +22,21 @@ from mjrl.algos.batch_reinforce import BatchREINFORCE
 
 
 class NPG(BatchREINFORCE):
-    def __init__(self, env, policy, baseline,
-                 normalized_step_size=0.01,
-                 const_learn_rate=None,
-                 FIM_invert_args={'iters': 10, 'damping': 1e-4},
-                 hvp_sample_frac=1.0,
-                 seed=123,
-                 save_logs=False,
-                 kl_dist=None,
-                 input_normalization=None,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        env,
+        policy,
+        baseline,
+        normalized_step_size=0.01,
+        const_learn_rate=None,
+        FIM_invert_args={"iters": 10, "damping": 1e-4},
+        hvp_sample_frac=1.0,
+        seed=123,
+        save_logs=False,
+        kl_dist=None,
+        input_normalization=None,
+        **kwargs
+    ):
         """
         All inputs are expected in mjrl's format unless specified
         :param normalized_step_size: Normalized step size (under the KL metric). Twice the desired KL distance
@@ -52,7 +57,8 @@ class NPG(BatchREINFORCE):
         self.FIM_invert_args = FIM_invert_args
         self.hvp_subsample = hvp_sample_frac
         self.running_score = None
-        if save_logs: self.logger = DataLog()
+        if save_logs:
+            self.logger = DataLog()
         # input normalization (running average)
         self.input_normalization = input_normalization
         if self.input_normalization is not None:
@@ -60,11 +66,13 @@ class NPG(BatchREINFORCE):
                 self.input_normalization = None
 
     def HVP(self, observations, actions, vector, regu_coef=None):
-        regu_coef = self.FIM_invert_args['damping'] if regu_coef is None else regu_coef
+        regu_coef = self.FIM_invert_args["damping"] if regu_coef is None else regu_coef
         vec = Variable(torch.from_numpy(vector).float(), requires_grad=False)
         if self.hvp_subsample is not None and self.hvp_subsample < 0.99:
             num_samples = observations.shape[0]
-            rand_idx = np.random.choice(num_samples, size=int(self.hvp_subsample*num_samples))
+            rand_idx = np.random.choice(
+                num_samples, size=int(self.hvp_subsample * num_samples)
+            )
             obs = observations[rand_idx]
             act = actions[rand_idx]
         else:
@@ -73,25 +81,31 @@ class NPG(BatchREINFORCE):
         old_dist_info = self.policy.old_dist_info(obs, act)
         new_dist_info = self.policy.new_dist_info(obs, act)
         mean_kl = self.policy.mean_kl(new_dist_info, old_dist_info)
-        grad_fo = torch.autograd.grad(mean_kl, self.policy.trainable_params, create_graph=True)
+        grad_fo = torch.autograd.grad(
+            mean_kl, self.policy.trainable_params, create_graph=True
+        )
         flat_grad = torch.cat([g.contiguous().view(-1) for g in grad_fo])
-        h = torch.sum(flat_grad*vec)
+        h = torch.sum(flat_grad * vec)
         hvp = torch.autograd.grad(h, self.policy.trainable_params)
         hvp_flat = np.concatenate([g.contiguous().view(-1).data.numpy() for g in hvp])
-        return hvp_flat + regu_coef*vector
+        return hvp_flat + regu_coef * vector
 
     def build_Hvp_eval(self, inputs, regu_coef=None):
         def eval(v):
             full_inp = inputs + [v] + [regu_coef]
             Hvp = self.HVP(*full_inp)
             return Hvp
+
         return eval
 
     # ----------------------------------------------------------
     def train_from_paths(self, paths):
 
-        observations, actions, advantages, base_stats, self.running_score = self.process_paths(paths)
-        if self.save_logs: self.log_rollout_statistics(paths)
+        observations, actions, advantages, base_stats, self.running_score = (
+            self.process_paths(paths)
+        )
+        if self.save_logs:
+            self.log_rollout_statistics(paths)
 
         # Keep track of times for various computations
         t_gLL = 0.0
@@ -99,16 +113,36 @@ class NPG(BatchREINFORCE):
 
         # normalize inputs if necessary
         if self.input_normalization:
-            data_in_shift, data_in_scale = np.mean(observations, axis=0), np.std(observations, axis=0)
-            pi_in_shift, pi_in_scale = self.policy.model.in_shift.data.numpy(), self.policy.model.in_scale.data.numpy()
-            pi_out_shift, pi_out_scale = self.policy.model.out_shift.data.numpy(), self.policy.model.out_scale.data.numpy()
-            pi_in_shift = self.input_normalization * pi_in_shift + (1-self.input_normalization) * data_in_shift
-            pi_in_scale = self.input_normalization * pi_in_scale + (1-self.input_normalization) * data_in_scale
-            self.policy.model.set_transformations(pi_in_shift, pi_in_scale, pi_out_shift, pi_out_scale)
+            data_in_shift, data_in_scale = np.mean(observations, axis=0), np.std(
+                observations, axis=0
+            )
+            pi_in_shift, pi_in_scale = (
+                self.policy.model.in_shift.data.numpy(),
+                self.policy.model.in_scale.data.numpy(),
+            )
+            pi_out_shift, pi_out_scale = (
+                self.policy.model.out_shift.data.numpy(),
+                self.policy.model.out_scale.data.numpy(),
+            )
+            pi_in_shift = (
+                self.input_normalization * pi_in_shift
+                + (1 - self.input_normalization) * data_in_shift
+            )
+            pi_in_scale = (
+                self.input_normalization * pi_in_scale
+                + (1 - self.input_normalization) * data_in_scale
+            )
+            self.policy.model.set_transformations(
+                pi_in_shift, pi_in_scale, pi_out_shift, pi_out_scale
+            )
 
         # Optimization algorithm
         # --------------------------
-        surr_before = self.CPI_surrogate(observations, actions, advantages).data.numpy().ravel()[0]
+        surr_before = (
+            self.CPI_surrogate(observations, actions, advantages)
+            .data.numpy()
+            .ravel()[0]
+        )
 
         # VPG
         ts = timer.time()
@@ -117,46 +151,54 @@ class NPG(BatchREINFORCE):
 
         # NPG
         ts = timer.time()
-        hvp = self.build_Hvp_eval([observations, actions],
-                                  regu_coef=self.FIM_invert_args['damping'])
-        npg_grad = cg_solve(hvp, vpg_grad, x_0=vpg_grad.copy(),
-                            cg_iters=self.FIM_invert_args['iters'])
+        hvp = self.build_Hvp_eval(
+            [observations, actions], regu_coef=self.FIM_invert_args["damping"]
+        )
+        npg_grad = cg_solve(
+            hvp, vpg_grad, x_0=vpg_grad.copy(), cg_iters=self.FIM_invert_args["iters"]
+        )
         t_FIM += timer.time() - ts
 
         # Step size computation
         # --------------------------
         if self.alpha is not None:
             alpha = self.alpha
-            n_step_size = (alpha ** 2) * np.dot(vpg_grad.T, npg_grad)
+            n_step_size = (alpha**2) * np.dot(vpg_grad.T, npg_grad)
         else:
             n_step_size = self.n_step_size
-            alpha = np.sqrt(np.abs(self.n_step_size / (np.dot(vpg_grad.T, npg_grad) + 1e-20)))
+            alpha = np.sqrt(
+                np.abs(self.n_step_size / (np.dot(vpg_grad.T, npg_grad) + 1e-20))
+            )
 
         # Policy update
         # --------------------------
         curr_params = self.policy.get_param_values()
         new_params = curr_params + alpha * npg_grad
         self.policy.set_param_values(new_params, set_new=True, set_old=False)
-        surr_after = self.CPI_surrogate(observations, actions, advantages).data.numpy().ravel()[0]
+        surr_after = (
+            self.CPI_surrogate(observations, actions, advantages)
+            .data.numpy()
+            .ravel()[0]
+        )
         kl_dist = self.kl_old_new(observations, actions).data.numpy().ravel()[0]
         self.policy.set_param_values(new_params, set_new=True, set_old=True)
 
         # Log information
         if self.save_logs:
-            self.logger.log_kv('alpha', alpha)
-            self.logger.log_kv('delta', n_step_size)
-            self.logger.log_kv('time_vpg', t_gLL)
-            self.logger.log_kv('time_npg', t_FIM)
-            self.logger.log_kv('kl_dist', kl_dist)
-            self.logger.log_kv('surr_improvement', surr_after - surr_before)
-            self.logger.log_kv('running_score', self.running_score)
+            self.logger.log_kv("alpha", alpha)
+            self.logger.log_kv("delta", n_step_size)
+            self.logger.log_kv("time_vpg", t_gLL)
+            self.logger.log_kv("time_npg", t_FIM)
+            self.logger.log_kv("kl_dist", kl_dist)
+            self.logger.log_kv("surr_improvement", surr_after - surr_before)
+            self.logger.log_kv("running_score", self.running_score)
             try:
                 self.env.env.env.evaluate_success(paths, self.logger)
             except:
                 # nested logic for backwards compatibility. TODO: clean this up.
                 try:
                     success_rate = self.env.env.env.evaluate_success(paths)
-                    self.logger.log_kv('success_rate', success_rate)
+                    self.logger.log_kv("success_rate", success_rate)
                 except:
                     pass
 

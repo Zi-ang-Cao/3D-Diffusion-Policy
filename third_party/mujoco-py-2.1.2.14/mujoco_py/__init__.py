@@ -18,12 +18,24 @@ GlfwContext = cymj.GlfwContext
 
 
 # Public API:
-__all__ = ['MjSim', 'MjSimState',
-           'MjRenderContextOffscreen', 'MjRenderContextWindow',
-           'MjRenderContext', 'MjViewer', 'MjViewerBasic',
-           'MujocoException', 'MjRenderPool', 'MjBatchRenderer', 'GlfwContext',
-           'load_model_from_path', 'load_model_from_xml',
-           'load_model_from_mjb',
-           'ignore_mujoco_warnings', 'const', "functions",
-           "__version__", "get_version"]
-
+__all__ = [
+    "MjSim",
+    "MjSimState",
+    "MjRenderContextOffscreen",
+    "MjRenderContextWindow",
+    "MjRenderContext",
+    "MjViewer",
+    "MjViewerBasic",
+    "MujocoException",
+    "MjRenderPool",
+    "MjBatchRenderer",
+    "GlfwContext",
+    "load_model_from_path",
+    "load_model_from_xml",
+    "load_model_from_mjb",
+    "ignore_mujoco_warnings",
+    "const",
+    "functions",
+    "__version__",
+    "get_version",
+]

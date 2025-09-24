@@ -15,6 +15,7 @@ import platform
 from numbers import Number
 import utils
 
+
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
         super().__init__()
@@ -24,29 +25,23 @@ class RandomShiftsAug(nn.Module):
         n, c, h, w = x.size()
         assert h == w
         padding = tuple([self.pad] * 4)
-        x = F.pad(x, padding, 'replicate')
+        x = F.pad(x, padding, "replicate")
         eps = 1.0 / (h + 2 * self.pad)
-        arange = torch.linspace(-1.0 + eps,
-                                1.0 - eps,
-                                h + 2 * self.pad,
-                                device=x.device,
-                                dtype=x.dtype)[:h]
+        arange = torch.linspace(
+            -1.0 + eps, 1.0 - eps, h + 2 * self.pad, device=x.device, dtype=x.dtype
+        )[:h]
         arange = arange.unsqueeze(0).repeat(h, 1).unsqueeze(2)
         base_grid = torch.cat([arange, arange.transpose(1, 0)], dim=2)
         base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1)
 
-        shift = torch.randint(0,
-                              2 * self.pad + 1,
-                              size=(n, 1, 1, 2),
-                              device=x.device,
-                              dtype=x.dtype)
+        shift = torch.randint(
+            0, 2 * self.pad + 1, size=(n, 1, 1, 2), device=x.device, dtype=x.dtype
+        )
         shift *= 2.0 / (h + 2 * self.pad)
 
         grid = base_grid + shift
-        return F.grid_sample(x,
-                             grid,
-                             padding_mode='zeros',
-                             align_corners=False)
+        return F.grid_sample(x, grid, padding_mode="zeros", align_corners=False)
+
 
 class Identity(nn.Module):
     def __init__(self, input_placeholder=None):
@@ -54,6 +49,7 @@ class Identity(nn.Module):
 
     def forward(self, x):
         return x
+
 
 class RLEncoder(nn.Module):
     def __init__(self, obs_shape, model_name, device):
@@ -68,30 +64,35 @@ class RLEncoder(nn.Module):
         self.model.fc = Identity()
         self.repr_dim = self.model.get_feature_size()
 
-        self.normalize_op = transforms.Normalize((0.485, 0.456, 0.406),
-                                                 (0.229, 0.224, 0.225))
+        self.normalize_op = transforms.Normalize(
+            (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
+        )
         self.channel_mismatch = True
 
     def init_model(self, model_name):
         # model name is e.g. resnet6_32channel
-        n_layer_string, n_channel_string = model_name.split('_')
+        n_layer_string, n_channel_string = model_name.split("_")
         layer_string_to_layer_list = {
-            'resnet6': [0, 0, 0, 0],
-            'resnet10': [1, 1, 1, 1],
-            'resnet18': [2, 2, 2, 2],
+            "resnet6": [0, 0, 0, 0],
+            "resnet10": [1, 1, 1, 1],
+            "resnet18": [2, 2, 2, 2],
         }
         channel_string_to_n_channel = {
-            '32channel': 32,
-            '64channel': 64,
+            "32channel": 32,
+            "64channel": 64,
         }
         layer_list = layer_string_to_layer_list[n_layer_string]
         start_num_channel = channel_string_to_n_channel[n_channel_string]
-        return ResNet84(BasicBlock, layer_list, start_num_channel=start_num_channel).to(self.device)
+        return ResNet84(BasicBlock, layer_list, start_num_channel=start_num_channel).to(
+            self.device
+        )
 
     def expand_first_layer(self):
         # convolutional channel expansion to deal with input mismatch
         multiplier = self.n_images
-        self.model.conv1.weight.data = self.model.conv1.weight.data.repeat(1,multiplier,1,1) / multiplier
+        self.model.conv1.weight.data = (
+            self.model.conv1.weight.data.repeat(1, multiplier, 1, 1) / multiplier
+        )
         means = (0.485, 0.456, 0.406) * multiplier
         stds = (0.229, 0.224, 0.225) * multiplier
         self.normalize_op = transforms.Normalize(means, stds)
@@ -102,9 +103,9 @@ class RLEncoder(nn.Module):
         # batch norm is trained does not affect performance)
         for module in self.model.modules():
             if isinstance(module, nn.BatchNorm2d):
-                if hasattr(module, 'weight'):
+                if hasattr(module, "weight"):
                     module.weight.requires_grad_(False)
-                if hasattr(module, 'bias'):
+                if hasattr(module, "bias"):
                     module.bias.requires_grad_(False)
                 module.eval()
 
@@ -117,7 +118,7 @@ class RLEncoder(nn.Module):
 
     def transform_obs_tensor_batch(self, obs):
         # transform obs batch before put into the pretrained resnet
-        new_obs = self.normalize_op(obs.float()/255)
+        new_obs = self.normalize_op(obs.float() / 255)
         return new_obs
 
     def _forward_impl(self, x):
@@ -128,6 +129,7 @@ class RLEncoder(nn.Module):
         o = self.transform_obs_tensor_batch(obs)
         h = self._forward_impl(o)
         return h
+
 
 class Stage3ShallowEncoder(nn.Module):
     def __init__(self, obs_shape, n_channel):
@@ -146,10 +148,14 @@ class Stage3ShallowEncoder(nn.Module):
         # TODO here add prediction head so we can do contrastive learning...
 
         self.apply(utils.weight_init)
-        self.normalize_op = transforms.Normalize((0.485, 0.456, 0.406, 0.485, 0.456, 0.406, 0.485, 0.456, 0.406),
-                                                 (0.229, 0.224, 0.225, 0.229, 0.224, 0.225, 0.229, 0.224, 0.225))
+        self.normalize_op = transforms.Normalize(
+            (0.485, 0.456, 0.406, 0.485, 0.456, 0.406, 0.485, 0.456, 0.406),
+            (0.229, 0.224, 0.225, 0.229, 0.224, 0.225, 0.229, 0.224, 0.225),
+        )
 
-        self.compress = nn.Sequential(nn.Linear(self.repr_dim, 50), nn.LayerNorm(50), nn.Tanh())
+        self.compress = nn.Sequential(
+            nn.Linear(self.repr_dim, 50), nn.LayerNorm(50), nn.Tanh()
+        )
         self.pred_layer = nn.Linear(50, 50, bias=False)
 
     def transform_obs_tensor_batch(self, obs):
@@ -188,6 +194,7 @@ class Stage3ShallowEncoder(nn.Module):
         compressed = self.compress(conv_out)
         return compressed
 
+
 class Encoder(nn.Module):
     def __init__(self, obs_shape, n_channel):
         super().__init__()
@@ -195,11 +202,16 @@ class Encoder(nn.Module):
         assert len(obs_shape) == 3
         self.repr_dim = n_channel * 35 * 35
 
-        self.convnet = nn.Sequential(nn.Conv2d(obs_shape[0], n_channel, 3, stride=2),
-                                     nn.ReLU(), nn.Conv2d(n_channel, n_channel, 3, stride=1),
-                                     nn.ReLU(), nn.Conv2d(n_channel, n_channel, 3, stride=1),
-                                     nn.ReLU(), nn.Conv2d(n_channel, n_channel, 3, stride=1),
-                                     nn.ReLU())
+        self.convnet = nn.Sequential(
+            nn.Conv2d(obs_shape[0], n_channel, 3, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(n_channel, n_channel, 3, stride=1),
+            nn.ReLU(),
+            nn.Conv2d(n_channel, n_channel, 3, stride=1),
+            nn.ReLU(),
+            nn.Conv2d(n_channel, n_channel, 3, stride=1),
+            nn.ReLU(),
+        )
 
         self.apply(utils.weight_init)
 
@@ -208,6 +220,7 @@ class Encoder(nn.Module):
         h = self.convnet(obs)
         h = h.view(h.shape[0], -1)
         return h
+
 
 class IdentityEncoder(nn.Module):
     def __init__(self, obs_shape):
@@ -219,21 +232,25 @@ class IdentityEncoder(nn.Module):
     def forward(self, obs):
         return obs
 
+
 class Actor(nn.Module):
     def __init__(self, repr_dim, action_shape, feature_dim, hidden_dim):
         super().__init__()
 
-        self.trunk = nn.Sequential(nn.Linear(repr_dim, feature_dim),
-                                   nn.LayerNorm(feature_dim), nn.Tanh())
+        self.trunk = nn.Sequential(
+            nn.Linear(repr_dim, feature_dim), nn.LayerNorm(feature_dim), nn.Tanh()
+        )
 
-        self.policy = nn.Sequential(nn.Linear(feature_dim, hidden_dim),
-                                    nn.ReLU(inplace=True),
-                                    nn.Linear(hidden_dim, hidden_dim),
-                                    nn.ReLU(inplace=True),
-                                    nn.Linear(hidden_dim, action_shape[0]))
+        self.policy = nn.Sequential(
+            nn.Linear(feature_dim, hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, action_shape[0]),
+        )
 
-        self.action_shift=0
-        self.action_scale=1
+        self.action_shift = 0
+        self.action_scale = 1
         self.apply(utils.weight_init)
 
     def forward(self, obs, std):
@@ -259,22 +276,30 @@ class Actor(nn.Module):
         dist = utils.TruncatedNormal(mu, std)
         return dist, pretanh
 
+
 class Critic(nn.Module):
     def __init__(self, repr_dim, action_shape, feature_dim, hidden_dim):
         super().__init__()
 
-        self.trunk = nn.Sequential(nn.Linear(repr_dim, feature_dim),
-                                   nn.LayerNorm(feature_dim), nn.Tanh())
+        self.trunk = nn.Sequential(
+            nn.Linear(repr_dim, feature_dim), nn.LayerNorm(feature_dim), nn.Tanh()
+        )
 
         self.Q1 = nn.Sequential(
             nn.Linear(feature_dim + action_shape[0], hidden_dim),
-            nn.ReLU(inplace=True), nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True), nn.Linear(hidden_dim, 1))
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, 1),
+        )
 
         self.Q2 = nn.Sequential(
             nn.Linear(feature_dim + action_shape[0], hidden_dim),
-            nn.ReLU(inplace=True), nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True), nn.Linear(hidden_dim, 1))
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, 1),
+        )
 
         self.apply(utils.weight_init)
 
@@ -286,14 +311,42 @@ class Critic(nn.Module):
 
         return q1, q2
 
+
 class VRL3Agent:
-    def __init__(self, obs_shape, action_shape, device, use_sensor, lr, feature_dim,
-                 hidden_dim, critic_target_tau, num_expl_steps,
-                 update_every_steps, stddev_clip, use_tb, use_data_aug, encoder_lr_scale,
-                 stage1_model_name, safe_q_target_factor, safe_q_threshold, pretanh_penalty, pretanh_threshold,
-                 stage2_update_encoder, cql_weight, cql_temp, cql_n_random, stage2_std, stage2_bc_weight,
-                 stage3_update_encoder, std0, std1, std_n_decay,
-                 stage3_bc_lam0, stage3_bc_lam1):
+    def __init__(
+        self,
+        obs_shape,
+        action_shape,
+        device,
+        use_sensor,
+        lr,
+        feature_dim,
+        hidden_dim,
+        critic_target_tau,
+        num_expl_steps,
+        update_every_steps,
+        stddev_clip,
+        use_tb,
+        use_data_aug,
+        encoder_lr_scale,
+        stage1_model_name,
+        safe_q_target_factor,
+        safe_q_threshold,
+        pretanh_penalty,
+        pretanh_threshold,
+        stage2_update_encoder,
+        cql_weight,
+        cql_temp,
+        cql_n_random,
+        stage2_std,
+        stage2_bc_weight,
+        stage3_update_encoder,
+        std0,
+        std1,
+        std_n_decay,
+        stage3_bc_lam0,
+        stage3_bc_lam1,
+    ):
         self.device = device
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
@@ -305,7 +358,11 @@ class VRL3Agent:
 
         if std1 > std0:
             std1 = std0
-        self.stddev_schedule = "linear(%s,%s,%s)" % (str(std0), str(std1), str(std_n_decay))
+        self.stddev_schedule = "linear(%s,%s,%s)" % (
+            str(std0),
+            str(std1),
+            str(std_n_decay),
+        )
 
         self.stddev_clip = stddev_clip
         self.use_data_aug = use_data_aug
@@ -337,12 +394,15 @@ class VRL3Agent:
         else:
             downstream_input_dim = self.encoder.repr_dim
 
-        self.actor = Actor(downstream_input_dim, action_shape, feature_dim,
-                           hidden_dim).to(device)
-        self.critic = Critic(downstream_input_dim, action_shape, feature_dim,
-                             hidden_dim).to(device)
-        self.critic_target = Critic(downstream_input_dim, action_shape,
-                                    feature_dim, hidden_dim).to(device)
+        self.actor = Actor(
+            downstream_input_dim, action_shape, feature_dim, hidden_dim
+        ).to(device)
+        self.critic = Critic(
+            downstream_input_dim, action_shape, feature_dim, hidden_dim
+        ).to(device)
+        self.critic_target = Critic(
+            downstream_input_dim, action_shape, feature_dim, hidden_dim
+        ).to(device)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # optimizers
@@ -361,12 +421,12 @@ class VRL3Agent:
         if verbose:
             print("Trying to load pretrained model from:", model_path)
         checkpoint = torch.load(model_path, map_location=torch.device(self.device))
-        state_dict = checkpoint['state_dict']
+        state_dict = checkpoint["state_dict"]
 
         pretrained_dict = {}
         # remove `module.` if model was pretrained with distributed mode
         for k, v in state_dict.items():
-            if 'module.' in k:
+            if "module." in k:
                 name = k[7:]
             else:
                 name = k
@@ -379,7 +439,10 @@ class VRL3Agent:
         # run convolutional channel expansion to match input shape
         self.encoder.expand_first_layer()
         if verbose:
-            print("Convolutional channel expansion finished: now can take in %d images as input." % self.encoder.n_images)
+            print(
+                "Convolutional channel expansion finished: now can take in %d images as input."
+                % self.encoder.n_images
+            )
 
     def train(self, training=True):
         self.training = training
@@ -387,7 +450,15 @@ class VRL3Agent:
         self.actor.train(training)
         self.critic.train(training)
 
-    def act(self, obs, step, eval_mode, obs_sensor=None, is_tensor_input=False, force_action_std=None):
+    def act(
+        self,
+        obs,
+        step,
+        eval_mode,
+        obs_sensor=None,
+        is_tensor_input=False,
+        force_action_std=None,
+    ):
         """
         obs: 3x84x84, uint8, [0,255]
         """
@@ -446,12 +517,14 @@ class VRL3Agent:
             # compute stage 3 BC weight
             bc_data_per_iter = 40000
             i_iter = step // bc_data_per_iter
-            bc_weight = self.stage3_bc_lam0 * self.stage3_bc_lam1 ** i_iter
+            bc_weight = self.stage3_bc_lam0 * self.stage3_bc_lam1**i_iter
 
         # batch data
         batch = next(replay_iter)
-        if use_sensor: # TODO might want to...?
-            obs, action, reward, discount, next_obs, obs_sensor, obs_sensor_next = utils.to_torch(batch, self.device)
+        if use_sensor:  # TODO might want to...?
+            obs, action, reward, discount, next_obs, obs_sensor, obs_sensor_next = (
+                utils.to_torch(batch, self.device)
+            )
         else:
             obs, action, reward, discount, next_obs = utils.to_torch(batch, self.device)
             obs_sensor, obs_sensor_next = None, None
@@ -475,24 +548,60 @@ class VRL3Agent:
             next_obs = self.encoder(next_obs)
 
         # concatenate obs with additional sensor observation if needed
-        obs_combined = torch.cat([obs, obs_sensor], dim=1) if obs_sensor is not None else obs
-        obs_next_combined = torch.cat([next_obs, obs_sensor_next], dim=1) if obs_sensor_next is not None else next_obs
+        obs_combined = (
+            torch.cat([obs, obs_sensor], dim=1) if obs_sensor is not None else obs
+        )
+        obs_next_combined = (
+            torch.cat([next_obs, obs_sensor_next], dim=1)
+            if obs_sensor_next is not None
+            else next_obs
+        )
 
         # update critic
-        metrics.update(self.update_critic_vrl3(obs_combined, action, reward, discount, obs_next_combined,
-                                               stddev, update_encoder, conservative_loss_weight))
+        metrics.update(
+            self.update_critic_vrl3(
+                obs_combined,
+                action,
+                reward,
+                discount,
+                obs_next_combined,
+                stddev,
+                update_encoder,
+                conservative_loss_weight,
+            )
+        )
 
         # update actor, following previous works, we do not use actor gradient for encoder update
-        metrics.update(self.update_actor_vrl3(obs_combined.detach(), action, stddev, bc_weight,
-                                              self.pretanh_penalty, self.pretanh_threshold))
+        metrics.update(
+            self.update_actor_vrl3(
+                obs_combined.detach(),
+                action,
+                stddev,
+                bc_weight,
+                self.pretanh_penalty,
+                self.pretanh_threshold,
+            )
+        )
 
-        metrics['batch_reward'] = reward.mean().item()
+        metrics["batch_reward"] = reward.mean().item()
 
         # update critic target networks
-        utils.soft_update_params(self.critic, self.critic_target, self.critic_target_tau)
+        utils.soft_update_params(
+            self.critic, self.critic_target, self.critic_target_tau
+        )
         return metrics
 
-    def update_critic_vrl3(self, obs, action, reward, discount, next_obs, stddev, update_encoder, conservative_loss_weight):
+    def update_critic_vrl3(
+        self,
+        obs,
+        action,
+        reward,
+        discount,
+        next_obs,
+        stddev,
+        update_encoder,
+        conservative_loss_weight,
+    ):
         metrics = dict()
         batch_size = obs.shape[0]
 
@@ -509,7 +618,11 @@ class VRL3Agent:
             target_Q = reward + (discount * target_V)
 
             if self.safe_q_target_factor < 1:
-                target_Q[target_Q > (self.q_threshold + 1)] = self.q_threshold + (target_Q[target_Q > (self.q_threshold+1)] - self.q_threshold) ** self.safe_q_target_factor
+                target_Q[target_Q > (self.q_threshold + 1)] = (
+                    self.q_threshold
+                    + (target_Q[target_Q > (self.q_threshold + 1)] - self.q_threshold)
+                    ** self.safe_q_target_factor
+                )
 
         Q1, Q2 = self.critic(obs, action)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
@@ -521,7 +634,12 @@ class VRL3Agent:
         - only compute this loss when conservative loss weight > 0
         """
         if conservative_loss_weight > 0:
-            random_actions = (torch.rand((batch_size * self.cql_n_random, self.act_dim), device=self.device) - 0.5) * 2
+            random_actions = (
+                torch.rand(
+                    (batch_size * self.cql_n_random, self.act_dim), device=self.device
+                )
+                - 0.5
+            ) * 2
 
             dist = self.actor(obs, stddev)
             current_actions = dist.sample(clip=self.stddev_clip)
@@ -530,11 +648,15 @@ class VRL3Agent:
             next_current_actions = dist.sample(clip=self.stddev_clip)
 
             # now get Q values for all these actions (for both Q networks)
-            obs_repeat = obs.unsqueeze(1).repeat(1, self.cql_n_random, 1).view(obs.shape[0] * self.cql_n_random,
-                                                                               obs.shape[1])
+            obs_repeat = (
+                obs.unsqueeze(1)
+                .repeat(1, self.cql_n_random, 1)
+                .view(obs.shape[0] * self.cql_n_random, obs.shape[1])
+            )
 
-            Q1_rand, Q2_rand = self.critic(obs_repeat,
-                                           random_actions)  # TODO might want to double check the logic here see if the repeat is correct
+            Q1_rand, Q2_rand = self.critic(
+                obs_repeat, random_actions
+            )  # TODO might want to double check the logic here see if the repeat is correct
             Q1_rand = Q1_rand.view(obs.shape[0], self.cql_n_random)
             Q2_rand = Q2_rand.view(obs.shape[0], self.cql_n_random)
 
@@ -545,22 +667,38 @@ class VRL3Agent:
             Q1_cat = torch.cat([Q1_rand, Q1, Q1_curr, Q1_curr_next], 1)
             Q2_cat = torch.cat([Q2_rand, Q2, Q2_curr, Q2_curr_next], 1)
 
-            cql_min_q1_loss = torch.logsumexp(Q1_cat / self.cql_temp,
-                                              dim=1, ).mean() * conservative_loss_weight * self.cql_temp
-            cql_min_q2_loss = torch.logsumexp(Q2_cat / self.cql_temp,
-                                              dim=1, ).mean() * conservative_loss_weight * self.cql_temp
+            cql_min_q1_loss = (
+                torch.logsumexp(
+                    Q1_cat / self.cql_temp,
+                    dim=1,
+                ).mean()
+                * conservative_loss_weight
+                * self.cql_temp
+            )
+            cql_min_q2_loss = (
+                torch.logsumexp(
+                    Q2_cat / self.cql_temp,
+                    dim=1,
+                ).mean()
+                * conservative_loss_weight
+                * self.cql_temp
+            )
 
             """Subtract the log likelihood of data"""
-            conservative_q_loss = cql_min_q1_loss + cql_min_q2_loss - (Q1.mean() + Q2.mean()) * conservative_loss_weight
+            conservative_q_loss = (
+                cql_min_q1_loss
+                + cql_min_q2_loss
+                - (Q1.mean() + Q2.mean()) * conservative_loss_weight
+            )
             critic_loss_combined = critic_loss + conservative_q_loss
         else:
             critic_loss_combined = critic_loss
 
         # logging
-        metrics['critic_target_q'] = target_Q.mean().item()
-        metrics['critic_q1'] = Q1.mean().item()
-        metrics['critic_q2'] = Q2.mean().item()
-        metrics['critic_loss'] = critic_loss.item()
+        metrics["critic_target_q"] = target_Q.mean().item()
+        metrics["critic_q1"] = Q1.mean().item()
+        metrics["critic_q2"] = Q2.mean().item()
+        metrics["critic_loss"] = critic_loss.item()
 
         # if needed, also update encoder with critic loss
         if update_encoder:
@@ -573,7 +711,9 @@ class VRL3Agent:
 
         return metrics
 
-    def update_actor_vrl3(self, obs, action, stddev, bc_weight, pretanh_penalty, pretanh_threshold):
+    def update_actor_vrl3(
+        self, obs, action, stddev, bc_weight, pretanh_penalty, pretanh_threshold
+    ):
         metrics = dict()
 
         """
@@ -605,7 +745,7 @@ class VRL3Agent:
         if pretanh_penalty > 0:
             pretanh_loss = pretanh.abs() - pretanh_threshold
             pretanh_loss[pretanh_loss < 0] = 0
-            pretanh_loss = (pretanh_loss ** 2).mean() * pretanh_penalty
+            pretanh_loss = (pretanh_loss**2).mean() * pretanh_penalty
 
         """
         combine actor losses and optimize
@@ -616,12 +756,12 @@ class VRL3Agent:
         actor_loss_combined.backward()
         self.actor_opt.step()
 
-        metrics['actor_loss'] = actor_loss.item()
-        metrics['actor_loss_bc'] = actor_loss_bc.item()
-        metrics['actor_logprob'] = log_prob.mean().item()
-        metrics['actor_ent'] = dist.entropy().sum(dim=-1).mean().item()
-        metrics['abs_pretanh'] = pretanh.abs().mean().item()
-        metrics['max_abs_pretanh'] = pretanh.abs().max().item()
+        metrics["actor_loss"] = actor_loss.item()
+        metrics["actor_loss_bc"] = actor_loss_bc.item()
+        metrics["actor_logprob"] = log_prob.mean().item()
+        metrics["actor_ent"] = dist.entropy().sum(dim=-1).mean().item()
+        metrics["abs_pretanh"] = pretanh.abs().mean().item()
+        metrics["max_abs_pretanh"] = pretanh.abs().max().item()
 
         return metrics
 

@@ -120,9 +120,9 @@ class FetchEnv(robot_env.RobotEnv):
             object_rel_pos = object_pos - grip_pos
             object_velp -= grip_velp
         else:
-            object_pos = (
-                object_rot
-            ) = object_velp = object_velr = object_rel_pos = np.zeros(0)
+            object_pos = object_rot = object_velp = object_velr = object_rel_pos = (
+                np.zeros(0)
+            )
         gripper_state = robot_qpos[-2:]
         gripper_vel = (
             robot_qvel[-2:] * dt

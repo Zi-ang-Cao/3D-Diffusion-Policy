@@ -20,5 +20,5 @@ while True:
 
     viewer.render()
     t += 1
-    if t > 100 and os.getenv('TESTING') is not None:
+    if t > 100 and os.getenv("TESTING") is not None:
         break

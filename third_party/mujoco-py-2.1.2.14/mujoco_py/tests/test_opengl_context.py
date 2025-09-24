@@ -32,18 +32,19 @@ BASIC_MODEL_XML = """
 </mujoco>
 """
 
+
 @pytest.mark.requires_rendering
 def test_glfw_context():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
     sim.forward()
 
-    render_context = MjRenderContext(sim, offscreen=True, opengl_backend='glfw')
+    render_context = MjRenderContext(sim, offscreen=True, opengl_backend="glfw")
     assert len(sim.render_contexts) == 1
     assert sim.render_contexts[0] is render_context
     assert isinstance(render_context.opengl_context, GlfwContext)
 
-    compare_imgs(sim.render(201, 205, camera_name="topcam"), 'test_glfw_context.png')
+    compare_imgs(sim.render(201, 205, camera_name="topcam"), "test_glfw_context.png")
     assert len(sim.render_contexts) == 1
     assert sim.render_contexts[0] is render_context
 
@@ -53,11 +54,11 @@ def test_read_depth_buffer():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
     sim.forward()
-    ctx = MjRenderContext(sim, offscreen=True, opengl_backend='glfw')
+    ctx = MjRenderContext(sim, offscreen=True, opengl_backend="glfw")
 
     buf = np.zeros((11, 100), dtype=np.float32)
-    assert buf.sum() == 0, f'{buf.sum()}'
+    assert buf.sum() == 0, f"{buf.sum()}"
 
     ctx.render(buf.shape[1], buf.shape[0], 0)
     ctx.read_pixels_depth(buf)
-    assert buf.sum() != 0, f'{buf.sum()} {buf.max()}'
+    assert buf.sum() != 0, f"{buf.sum()} {buf.max()}"

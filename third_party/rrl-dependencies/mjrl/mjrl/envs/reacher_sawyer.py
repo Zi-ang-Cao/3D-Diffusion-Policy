@@ -8,7 +8,7 @@ class Reacher7DOFEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
         self.hand_sid = -2
         self.target_sid = -1
-        mujoco_env.MujocoEnv.__init__(self, 'sawyer.xml', 4)
+        mujoco_env.MujocoEnv.__init__(self, "sawyer.xml", 4)
         utils.EzPickle.__init__(self)
         self.hand_sid = self.model.site_name2id("finger")
         self.target_sid = self.model.site_name2id("target")
@@ -20,12 +20,14 @@ class Reacher7DOFEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return obs, reward, False, self.get_env_infos()
 
     def get_obs(self):
-        return np.concatenate([
-            self.data.qpos.flat,
-            self.data.qvel.ravel() * self.dt,       # delta_x instead of velocity
-            self.data.site_xpos[self.hand_sid],
-            self.data.site_xpos[self.target_sid],
-        ])
+        return np.concatenate(
+            [
+                self.data.qpos.flat,
+                self.data.qvel.ravel() * self.dt,  # delta_x instead of velocity
+                self.data.site_xpos[self.hand_sid],
+                self.data.site_xpos[self.target_sid],
+            ]
+        )
 
     def get_reward(self, obs, act=None):
         obs = np.clip(obs, -10.0, 10.0)
@@ -41,7 +43,7 @@ class Reacher7DOFEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             target_pos = obs[:, :, -3:]
             l1_dist = np.sum(np.abs(hand_pos - target_pos), axis=-1)
             l2_dist = np.linalg.norm(hand_pos - target_pos, axis=-1)
-        reward = - l1_dist - 5.0 * l2_dist
+        reward = -l1_dist - 5.0 * l2_dist
         return reward
 
     def compute_path_rewards(self, paths):
@@ -81,14 +83,15 @@ class Reacher7DOFEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     def get_env_state(self):
         target_pos = self.model.site_pos[self.target_sid].copy()
-        return dict(qp=self.data.qpos.copy(), qv=self.data.qvel.copy(),
-                    target_pos=target_pos)
+        return dict(
+            qp=self.data.qpos.copy(), qv=self.data.qvel.copy(), target_pos=target_pos
+        )
 
     def set_env_state(self, state):
         self.sim.reset()
-        qp = state['qp'].copy()
-        qv = state['qv'].copy()
-        target_pos = state['target_pos']
+        qp = state["qp"].copy()
+        qv = state["qv"].copy()
+        target_pos = state["target_pos"]
         self.model.site_pos[self.target_sid] = target_pos
         self.data.qpos[:] = qp
         self.data.qvel[:] = qv

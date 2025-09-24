@@ -35,10 +35,11 @@ sim.render(100, 100)
 modelpos = np.zeros(3)
 modelquat = np.zeros(4)
 roompos = np.ones(3)
-roomquat = np.array([1., 0., 1., 0.])
+roomquat = np.array([1.0, 0.0, 1.0, 0.0])
 
-functions.mjv_room2model(modelpos, modelquat, roompos,
-                         roomquat, sim.render_contexts[0].scn)
+functions.mjv_room2model(
+    modelpos, modelquat, roompos, roomquat, sim.render_contexts[0].scn
+)
 
 print("\n\nAnother internal function, mjv_room2model:")
 print("modelpos = %s, modelquat = %s" % (str(modelpos), str(modelquat)))

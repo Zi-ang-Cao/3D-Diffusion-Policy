@@ -1,4 +1,5 @@
 """classic Acrobot task"""
+
 import numpy as np
 from numpy import sin, cos, pi
 
@@ -21,7 +22,6 @@ __author__ = "Christoph Dann <cdann@cdann.de>"
 
 
 class AcrobotEnv(core.Env):
-
     """
     Acrobot is a 2-link pendulum with only the second joint actuated.
     Initially, both links point downwards. The goal is to swing the
@@ -157,16 +157,11 @@ class AcrobotEnv(core.Env):
         theta2 = s[1]
         dtheta1 = s[2]
         dtheta2 = s[3]
-        d1 = (
-            m1 * lc1 ** 2
-            + m2 * (l1 ** 2 + lc2 ** 2 + 2 * l1 * lc2 * cos(theta2))
-            + I1
-            + I2
-        )
-        d2 = m2 * (lc2 ** 2 + l1 * lc2 * cos(theta2)) + I2
+        d1 = m1 * lc1**2 + m2 * (l1**2 + lc2**2 + 2 * l1 * lc2 * cos(theta2)) + I1 + I2
+        d2 = m2 * (lc2**2 + l1 * lc2 * cos(theta2)) + I2
         phi2 = m2 * lc2 * g * cos(theta1 + theta2 - pi / 2.0)
         phi1 = (
-            -m2 * l1 * lc2 * dtheta2 ** 2 * sin(theta2)
+            -m2 * l1 * lc2 * dtheta2**2 * sin(theta2)
             - 2 * m2 * l1 * lc2 * dtheta2 * dtheta1 * sin(theta2)
             + (m1 * lc1 + m2 * l1) * g * cos(theta1 - pi / 2)
             + phi2
@@ -174,13 +169,13 @@ class AcrobotEnv(core.Env):
         if self.book_or_nips == "nips":
             # the following line is consistent with the description in the
             # paper
-            ddtheta2 = (a + d2 / d1 * phi1 - phi2) / (m2 * lc2 ** 2 + I2 - d2 ** 2 / d1)
+            ddtheta2 = (a + d2 / d1 * phi1 - phi2) / (m2 * lc2**2 + I2 - d2**2 / d1)
         else:
             # the following line is consistent with the java implementation and the
             # book
             ddtheta2 = (
-                a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1 ** 2 * sin(theta2) - phi2
-            ) / (m2 * lc2 ** 2 + I2 - d2 ** 2 / d1)
+                a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1**2 * sin(theta2) - phi2
+            ) / (m2 * lc2**2 + I2 - d2**2 / d1)
         ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
         return (dtheta1, dtheta2, ddtheta1, ddtheta2, 0.0)
 
@@ -209,7 +204,7 @@ class AcrobotEnv(core.Env):
         link_lengths = [self.LINK_LENGTH_1, self.LINK_LENGTH_2]
 
         self.viewer.draw_line((-2.2, 1), (2.2, 1))
-        for ((x, y), th, llen) in zip(xys, thetas, link_lengths):
+        for (x, y), th, llen in zip(xys, thetas, link_lengths):
             l, r, t, b = 0, llen, 0.1, -0.1
             jtransform = rendering.Transform(rotation=th, translation=(x, y))
             link = self.viewer.draw_polygon([(l, b), (l, t), (r, t), (r, b)])

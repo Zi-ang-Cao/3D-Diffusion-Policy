@@ -2,6 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates
 
 import logging
+
 logging.disable(logging.CRITICAL)
 import numpy as np
 import time as timer
@@ -18,16 +19,21 @@ from mjrl.utils.gym_env import GymEnv
 from rrl.utils import make_env
 
 
-if __name__ == '__main__':
-    env_name = 'hammer-v0'
+if __name__ == "__main__":
+    env_name = "hammer-v0"
     cam = "left_cross"
     device_id = 0
-    encoder_type = 'resnet34'
-    #encoder_type = 'identity'
-    #encoder_type = None
+    encoder_type = "resnet34"
+    # encoder_type = 'identity'
+    # encoder_type = None
 
-    #env = GymEnv(env_name)
-    env, _ = make_env(env_name, from_pixels=True, cam_list=[cam], encoder_type=encoder_type, hybrid_state=True)
+    # env = GymEnv(env_name)
+    env, _ = make_env(
+        env_name,
+        from_pixels=True,
+        cam_list=[cam],
+        encoder_type=encoder_type,
+        hybrid_state=True,
+    )
     z = env.reset()
     print(z.shape)
-

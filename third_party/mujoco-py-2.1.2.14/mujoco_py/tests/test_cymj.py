@@ -10,15 +10,18 @@ from numbers import Number
 
 import numpy as np
 import pytest
+
 # from threading import Thread, Event
 from PIL import Image
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from mujoco_py import (
-    MjSim, load_model_from_xml,
-    load_model_from_path, MjSimState,
+    MjSim,
+    load_model_from_xml,
+    load_model_from_path,
+    MjSimState,
     ignore_mujoco_warnings,
-    load_model_from_mjb
+    load_model_from_mjb,
 )
 from mujoco_py import const, cymj, functions
 from mujoco_py.tests.utils import compare_imgs
@@ -97,10 +100,10 @@ def test_model_save_load():
     model = load_model_from_xml(BASIC_MODEL_XML)
     xml_from_model = model.get_xml()
     model_from_xml = load_model_from_xml(xml_from_model)
-    assert(xml_from_model == model_from_xml.get_xml())
+    assert xml_from_model == model_from_xml.get_xml()
     mjb_from_model = model.get_mjb()
     model_from_mjb = load_model_from_mjb(mjb_from_model)
-    assert(mjb_from_model == model_from_mjb.get_mjb())
+    assert mjb_from_model == model_from_mjb.get_mjb()
 
 
 def test_sim_save():
@@ -117,7 +120,7 @@ def test_sim_save():
         assert loaded_model.nkey == 1
 
     with BytesIO() as f:
-        sim.save(f, format='mjb')
+        sim.save(f, format="mjb")
 
         f.seek(0)
         loaded_model = load_model_from_mjb(f.read())
@@ -129,50 +132,44 @@ def test_mj_sim_buffers():
 
     # test no callback
     sim = MjSim(model, nsubsteps=2)
-    assert(sim.udd_state == {})
+    assert sim.udd_state == {}
 
     sim.step()
-    assert(sim.udd_state == {})
+    assert sim.udd_state == {}
 
     # test with callback
     foo = 10
-    d = {"foo": foo,
-         "foo_2": np.array([foo, foo])}
+    d = {"foo": foo, "foo_2": np.array([foo, foo])}
 
     def udd_callback(sim):
         return d
 
     sim = MjSim(model, nsubsteps=2, udd_callback=udd_callback)
-    assert(sim.udd_state is not None)
-    assert(sim.udd_state["foo"] == foo)
-    assert(sim.udd_state["foo_2"].shape[0] == 2)
-    assert(sim.udd_state["foo_2"][0] == foo)
+    assert sim.udd_state is not None
+    assert sim.udd_state["foo"] == foo
+    assert sim.udd_state["foo_2"].shape[0] == 2
+    assert sim.udd_state["foo_2"][0] == foo
 
     foo = 11
-    d = {"foo": foo,
-         "foo_2": np.array([foo, foo])}
+    d = {"foo": foo, "foo_2": np.array([foo, foo])}
     sim.step()
-    assert(sim.udd_state is not None)
-    assert(sim.udd_state["foo"] == foo)
-    assert(sim.udd_state["foo_2"][0] == foo)
+    assert sim.udd_state is not None
+    assert sim.udd_state["foo"] == foo
+    assert sim.udd_state["foo_2"][0] == foo
 
     d = {}
     with pytest.raises(AssertionError):
         sim.step()
 
-    d = {"foo": foo,
-         "foo_2": np.array([foo, foo]),
-         "foo_3": foo}
+    d = {"foo": foo, "foo_2": np.array([foo, foo]), "foo_3": foo}
     with pytest.raises(AssertionError):
         sim.step()
 
-    d = {"foo": foo,
-         "foo_2": np.array([foo, foo, foo])}
+    d = {"foo": foo, "foo_2": np.array([foo, foo, foo])}
     with pytest.raises(AssertionError):
         sim.step()
 
-    d = {"foo": "haha",
-         "foo_2": np.array([foo, foo, foo])}
+    d = {"foo": "haha", "foo_2": np.array([foo, foo, foo])}
     with pytest.raises(AssertionError):
         sim.step()
 
@@ -216,10 +213,8 @@ def test_joint_qpos_qvel_ops():
     # And the other with an np.ndarray
     sim.data.set_joint_qvel("joint1", np.array([1, 2, 3, 0.1, 0.1, 0.1]))
     sim.forward()
-    assert_array_equal(sim.data.get_joint_qpos(
-        "joint1"), [1, 2, 3, 1, 0, 0, 0])
-    assert_array_equal(sim.data.get_joint_qvel(
-        "joint1"), [1, 2, 3, 0.1, 0.1, 0.1])
+    assert_array_equal(sim.data.get_joint_qpos("joint1"), [1, 2, 3, 1, 0, 0, 0])
+    assert_array_equal(sim.data.get_joint_qvel("joint1"), [1, 2, 3, 0.1, 0.1, 0.1])
 
 
 def test_mocap_ops():
@@ -239,18 +234,20 @@ def test_mocap_ops():
     assert_array_almost_equal(sim.data.get_mocap_quat("mocap1"), new_quat)
     assert_array_equal(sim.data.get_body_xpos("mocap1"), new_pos)
     assert_array_almost_equal(sim.data.get_body_xquat("mocap1"), new_quat)
-    assert_array_almost_equal(sim.data.get_body_xmat("mocap1"),
-                              [[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+    assert_array_almost_equal(
+        sim.data.get_body_xmat("mocap1"), [[1, 0, 0], [0, 0, -1], [0, 1, 0]]
+    )
 
 
 def test_sim_state():
     model = load_model_from_xml(BASIC_MODEL_XML)
 
     foo = 10
-    d = {"foo": foo,
-         "foo_array": np.array([foo, foo, foo]),
-         "foo_2darray": np.reshape(np.array([foo, foo, foo, foo]), (2, 2)),
-         }
+    d = {
+        "foo": foo,
+        "foo_array": np.array([foo, foo, foo]),
+        "foo_2darray": np.reshape(np.array([foo, foo, foo, foo]), (2, 2)),
+    }
 
     def udd_callback(sim):
         return d
@@ -263,7 +260,7 @@ def test_sim_state():
     assert np.array_equal(state.qvel, sim.data.qvel)
     assert np.array_equal(state.act, sim.data.act)
     for k in state.udd_state.keys():
-        if (isinstance(state.udd_state[k], Number)):
+        if isinstance(state.udd_state[k], Number):
             assert state.udd_state[k] == sim.udd_state[k]
         else:
             assert np.array_equal(state.udd_state[k], sim.udd_state[k])
@@ -280,7 +277,7 @@ def test_sim_state():
     assert np.array_equal(state.qvel, sim.data.qvel)
     assert np.array_equal(state.act, sim.data.act)
     for k in state2.udd_state.keys():
-        if (isinstance(state2.udd_state[k], Number)):
+        if isinstance(state2.udd_state[k], Number):
             assert state2.udd_state[k] == sim.udd_state[k]
         else:
             assert np.array_equal(state2.udd_state[k], sim.udd_state[k])
@@ -295,7 +292,8 @@ def test_sim_state():
 
     # test equality with changing contents of array
     state2 = state2._replace(
-        udd_state={"foo": foo, "foo_array": np.array([foo, foo + 1])})
+        udd_state={"foo": foo, "foo_array": np.array([foo, foo + 1])}
+    )
     assert state2 != state
     assert not (state2 == state)
 
@@ -315,8 +313,7 @@ def test_sim_state():
     state3.qpos[0] = -1
     assert not np.array_equal(state3.qpos, sim.data.qpos)
     state3.udd_state["foo_array"][0] = -1
-    assert not np.array_equal(
-        state3.udd_state["foo_array"], sim.udd_state["foo_array"])
+    assert not np.array_equal(state3.udd_state["foo_array"], sim.udd_state["foo_array"])
 
     # test no callback
     sim = MjSim(model, nsubsteps=2)
@@ -340,9 +337,9 @@ def test_sim_state():
 
 
 def test_mj_warning_raises():
-    ''' Test that MuJoCo warnings cause exceptions. '''
+    """Test that MuJoCo warnings cause exceptions."""
     # Two boxes on a plane need more than 1 contact (nconmax)
-    xml = '''
+    xml = """
     <mujoco>
       <size nconmax="1"/>
       <worldbody>
@@ -351,7 +348,7 @@ def test_mj_warning_raises():
         <body pos="0 1 1"> <joint type="free"/> <geom size="1"/> </body>
       </worldbody>
     </mujoco>
-    '''
+    """
     model = load_model_from_xml(xml)
     sim = MjSim(model)
 
@@ -395,7 +392,7 @@ def test_mj_error_raises():
 
 def test_ignore_mujoco_warnings():
     # Two boxes on a plane need more than 1 contact (nconmax)
-    xml = '''
+    xml = """
     <mujoco>
       <size nconmax="1"/>
       <worldbody>
@@ -404,7 +401,7 @@ def test_ignore_mujoco_warnings():
         <body pos="0 1 1"> <joint type="free"/> <geom size="1"/> </body>
       </worldbody>
     </mujoco>
-    '''
+    """
     model = load_model_from_xml(xml)
     sim = MjSim(model)
 
@@ -445,60 +442,60 @@ def test_jacobians():
     sim.reset()
     # After reset jacobians are all zeros
     target_jacp = np.zeros(3 * sim.model.nv)
-    sim.data.get_site_jacp('target', jacp=target_jacp)
+    sim.data.get_site_jacp("target", jacp=target_jacp)
     np.testing.assert_allclose(target_jacp, np.zeros(3 * sim.model.nv))
     # After first forward, jacobians are real
     sim.forward()
-    sim.data.get_site_jacp('target', jacp=target_jacp)
+    sim.data.get_site_jacp("target", jacp=target_jacp)
     target_test = np.array([0, 0, -1, 1, 0, 0])
     np.testing.assert_allclose(target_jacp, target_test)
     # Should be unchanged after steps (zero action)
     for _ in range(2):
         sim.step()
         sim.forward()
-    sim.data.get_site_jacp('target', jacp=target_jacp)
+    sim.data.get_site_jacp("target", jacp=target_jacp)
     assert np.linalg.norm(target_jacp - target_test) < 1e-3
     # Apply a very large action, ensure jacobian unchanged after step
     sim.reset()
     sim.forward()
     sim.data.ctrl[:] = np.ones(sim.model.nu) * 1e9
     sim.step()
-    sim.data.get_site_jacp('target', jacp=target_jacp)
+    sim.data.get_site_jacp("target", jacp=target_jacp)
     np.testing.assert_allclose(target_jacp, target_test)
     # After large action, ensure jacobian changed after forward
     sim.forward()
-    sim.data.get_site_jacp('target', jacp=target_jacp)
+    sim.data.get_site_jacp("target", jacp=target_jacp)
     assert not np.allclose(target_jacp, target_test)
     # Test the `site_jacp` property, which gets all at once
     np.testing.assert_allclose(target_jacp, sim.data.site_jacp[0])
     # Test not passing in array
     sim.reset()
     sim.forward()
-    target_jacp = sim.data.get_site_jacp('target')
+    target_jacp = sim.data.get_site_jacp("target")
     np.testing.assert_allclose(target_jacp, target_test)
     # Test passing in bad array (long instead of double)
     target_jacp = np.zeros(3 * sim.model.nv, dtype=np.long)
     with pytest.raises(ValueError):
-        sim.data.get_site_jacp('target', jacp=target_jacp)
+        sim.data.get_site_jacp("target", jacp=target_jacp)
     # Test rotation jacobian - like above but 'jacr' instead of 'jacp'
     # After reset jacobians are all zeros
     sim.reset()
     target_jacr = np.zeros(3 * sim.model.nv)
-    sim.data.get_site_jacr('target', jacr=target_jacr)
+    sim.data.get_site_jacr("target", jacr=target_jacr)
     np.testing.assert_allclose(target_jacr, np.zeros(3 * sim.model.nv))
     # After first forward, jacobians are real
     sim.forward()
-    sim.data.get_site_jacr('target', jacr=target_jacr)
+    sim.data.get_site_jacr("target", jacr=target_jacr)
     target_test = np.array([1, 1, 0, 0, 0, 0])
     # Test allocating dedicated array
-    target_jacr = sim.data.get_site_jacr('target')
+    target_jacr = sim.data.get_site_jacr("target")
     np.testing.assert_allclose(target_jacr, target_test)
     # Test the batch getter (all sites at once)
     np.testing.assert_allclose(target_jacr, sim.data.site_jacr[0])
     # Test passing in bad array
     target_jacr = np.zeros(3 * sim.model.nv, dtype=np.long)
     with pytest.raises(ValueError):
-        sim.data.get_site_jacr('target', jacr=target_jacr)
+        sim.data.get_site_jacr("target", jacr=target_jacr)
 
 
 def test_xvelp():  # xvelp = positional velocity in world frame
@@ -526,17 +523,17 @@ def test_xvelp():  # xvelp = positional velocity in world frame
     sim.reset()
     sim.forward()
     # Check that xvelp starts out at zero (since qvel is zero)
-    site1_xvelp = sim.data.get_site_xvelp('site1')
+    site1_xvelp = sim.data.get_site_xvelp("site1")
     np.testing.assert_allclose(site1_xvelp, np.zeros(3))
     # Push the base body and step forward to get it moving
     sim.data.ctrl[0] = 1e9
     sim.step()
     sim.forward()
     # Check that the first body has nonzero xvelp
-    body1_xvelp = sim.data.get_body_xvelp('body1')
+    body1_xvelp = sim.data.get_body_xvelp("body1")
     assert not np.allclose(body1_xvelp, np.zeros(3))
     # Check that the second body has zero xvelp (still)
-    body2_xvelp = sim.data.get_body_xvelp('body2')
+    body2_xvelp = sim.data.get_body_xvelp("body2")
     np.testing.assert_allclose(body2_xvelp, np.zeros(3))
     # Check that this matches the batch (gathered) getter property
     np.testing.assert_allclose(body2_xvelp, sim.data.body_xvelp[2])
@@ -567,17 +564,17 @@ def test_xvelr():  # xvelr = rotational velocity in world frame
     sim.reset()
     sim.forward()
     # Check that xvelr starts out at zero (since qvel is zero)
-    site1_xvelr = sim.data.get_site_xvelr('site1')
+    site1_xvelr = sim.data.get_site_xvelr("site1")
     np.testing.assert_allclose(site1_xvelr, np.zeros(3))
     # Push the base body and step forward to get it moving
     sim.data.ctrl[0] = 1e9
     sim.step()
     sim.forward()
     # Check that the first body has nonzero xvelr
-    body1_xvelr = sim.data.get_body_xvelr('body1')
+    body1_xvelr = sim.data.get_body_xvelr("body1")
     assert not np.allclose(body1_xvelr, np.zeros(3))
     # Check that the second body has zero xvelr (still)
-    body2_xvelr = sim.data.get_body_xvelr('body2')
+    body2_xvelr = sim.data.get_body_xvelr("body2")
     np.testing.assert_allclose(body2_xvelr, np.zeros(3))
     # Check that this matches the batch (gathered) getter property
     np.testing.assert_allclose(body2_xvelr, sim.data.body_xvelr[2])
@@ -591,7 +588,7 @@ def test_rendering():
 
     img, depth = sim.render(200, 200, depth=True)
     assert img.shape == (200, 200, 3)
-    compare_imgs(img, 'test_rendering.freecam.png')
+    compare_imgs(img, "test_rendering.freecam.png")
 
     depth = (depth - np.min(depth)) / (np.max(depth) - np.min(depth))
     depth = np.asarray(depth * 255, dtype=np.uint8)
@@ -599,26 +596,28 @@ def test_rendering():
 
     # Unfortunately mujoco 2.0 renders slightly different depth image on mac and on linux here
     if "darwin" in sys.platform.lower():
-        compare_imgs(depth, 'test_rendering.freecam.depth-darwin.png')
+        compare_imgs(depth, "test_rendering.freecam.depth-darwin.png")
     else:
-        compare_imgs(depth, 'test_rendering.freecam.depth.png')
+        compare_imgs(depth, "test_rendering.freecam.depth.png")
 
     img = sim.render(100, 100, camera_name="camera1")
     assert img.shape == (100, 100, 3)
-    compare_imgs(img, 'test_rendering.camera1.png')
+    compare_imgs(img, "test_rendering.camera1.png")
 
     img = sim.render(200, 100, camera_name="camera1")
     assert img.shape == (100, 200, 3)
-    compare_imgs(img, 'test_rendering.camera1.narrow.png')
+    compare_imgs(img, "test_rendering.camera1.narrow.png")
 
     render_context = sim.render_contexts[0]
-    render_context.add_marker(size=np.array([.4, .5, .6]),
-                              pos=np.array([.4, .5, .6]),
-                              rgba=np.array([.7, .8, .9, 1.0]),
-                              label="mark")
+    render_context.add_marker(
+        size=np.array([0.4, 0.5, 0.6]),
+        pos=np.array([0.4, 0.5, 0.6]),
+        rgba=np.array([0.7, 0.8, 0.9, 1.0]),
+        label="mark",
+    )
     img = sim.render(200, 200, camera_name="camera1")
     assert img.shape == (200, 200, 3)
-    compare_imgs(img, 'test_rendering_markers.camera1.png')
+    compare_imgs(img, "test_rendering_markers.camera1.png")
 
 
 @pytest.mark.requires_rendering
@@ -628,14 +627,16 @@ def test_rendering_failing():
     sim.forward()
     sim.render(100, 100)
     render_context = sim.render_contexts[0]
-    render_context.add_marker(size=np.array([.4, .5, .6]),
-                              pos=np.array([.4, .5, .6]),
-                              rgba=np.array([.7, .8, .9, 1.0]),
-                              label="blaaaa")
+    render_context.add_marker(
+        size=np.array([0.4, 0.5, 0.6]),
+        pos=np.array([0.4, 0.5, 0.6]),
+        rgba=np.array([0.7, 0.8, 0.9, 1.0]),
+        label="blaaaa",
+    )
     img = sim.render(200, 200, camera_name="camera1")
     assert img.shape == (200, 200, 3)
     try:
-        compare_imgs(img, 'test_rendering_markers.camera1.png')
+        compare_imgs(img, "test_rendering_markers.camera1.png")
         assert False
     except Exception as e:
         pass
@@ -647,12 +648,14 @@ def test_viewercontext():
     sim = MjSim(model)
     sim.forward()
     renderer = cymj.MjRenderContext(sim, offscreen=True)
-    renderer.add_marker(type=const.GEOM_SPHERE,
-                        size=np.ones(3) * 0.1,
-                        pos=np.zeros(3),
-                        mat=np.eye(3).flatten(),
-                        rgba=np.ones(4),
-                        label="mark")
+    renderer.add_marker(
+        type=const.GEOM_SPHERE,
+        size=np.ones(3) * 0.1,
+        pos=np.zeros(3),
+        mat=np.eye(3).flatten(),
+        rgba=np.ones(4),
+        label="mark",
+    )
 
 
 def test_xml_from_path():
@@ -660,8 +663,7 @@ def test_xml_from_path():
     sim = MjSim(model)
     xml = model.get_xml()
     assert xml.find("blabla") > -1, "include should be embeeded"
-    assert xml.find("include") == - \
-        1, "include should be parsed and not present"
+    assert xml.find("include") == -1, "include should be parsed and not present"
 
 
 def test_sensors():
@@ -679,21 +681,23 @@ def test_high_res():
     img = sim.render(1000, 1000)
     img = np.array(Image.fromarray(img).resize(size=(200, 200)))
     assert img.shape == (200, 200, 3)
-    compare_imgs(img, 'test_rendering.freecam.png')
+    compare_imgs(img, "test_rendering.freecam.png")
 
 
-@pytest.mark.skipif(sys.platform.startswith("win"), reason="This test fails on windows.")
+@pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="This test fails on windows."
+)
 def test_multiprocess():
     """
     Tests for importing mujoco_py from multiple processes.
     """
     remove_mujoco_build_and_lock()
-    ctx = get_context('spawn')
+    ctx = get_context("spawn")
     processes = []
     times = 3
     queue = ctx.Queue()
     for idx in range(5):
-        processes.append(ctx.Process(target=import_process, args=(queue, )))
+        processes.append(ctx.Process(target=import_process, args=(queue,)))
     for p in processes:
         p.start()
     for p in processes:
@@ -702,19 +706,21 @@ def test_multiprocess():
         assert queue.get(), "One of processes failed."
 
 
-@pytest.mark.skipif(sys.platform.startswith("win"), reason="This test fails on windows.")
+@pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="This test fails on windows."
+)
 def test_multiprocess_with_killing():
     """
     Kills a process in a middle of compilation and verifies that
     other processes can resume compilation.
     """
     remove_mujoco_build_and_lock()
-    ctx = get_context('spawn')
+    ctx = get_context("spawn")
     processes = []
     times = 3
     queue = ctx.Queue()
     for idx in range(times):
-        processes.append(ctx.Process(target=import_process, args=(queue, )))
+        processes.append(ctx.Process(target=import_process, args=(queue,)))
     processes[0].start()
     # We wait 20s so the compilation already
     # has started. Then we kill the process.
@@ -731,6 +737,7 @@ def test_multiprocess_with_killing():
 def import_process(queue):
     try:
         from mujoco_py import builder
+
         mujoco_path = builder.discover_mujoco()
         builder.load_cython_ext(mujoco_path)
     except Exception as e:
@@ -741,7 +748,7 @@ def import_process(queue):
 
 class TestUserdata(unittest.TestCase):
     def test_userdata(self):
-        xml = '''
+        xml = """
             <mujoco>
                 <size nuserdata="{}"/>
                 <worldbody>
@@ -751,30 +758,31 @@ class TestUserdata(unittest.TestCase):
                     </body>
                 </worldbody>
             </mujoco>
-        '''
+        """
         model = load_model_from_xml(xml.format(1))
-        assert model.nuserdata == 1, 'bad nuserdata {}'.format(model.nuserdata)
+        assert model.nuserdata == 1, "bad nuserdata {}".format(model.nuserdata)
         model = load_model_from_xml(xml.format(10))
-        assert model.nuserdata == 10, 'bad nuserdata {}'.format(model.nuserdata)
+        assert model.nuserdata == 10, "bad nuserdata {}".format(model.nuserdata)
         sim = MjSim(model)
         data = sim.data
-        assert data.userdata[0] == 0, 'bad userdata {}'.format(data.userdata)
+        assert data.userdata[0] == 0, "bad userdata {}".format(data.userdata)
         data.userdata[0] = 1
-        assert data.userdata[0] == 1, 'bad userdata {}'.format(data.userdata)
+        assert data.userdata[0] == 1, "bad userdata {}".format(data.userdata)
         # Check that we throw an assert if there's not enough userdata
         model = load_model_from_xml(xml.format(0))
         with self.assertRaises(AssertionError):
-            model.set_userdata_names(['foo'])
+            model.set_userdata_names(["foo"])
         # Doesn't throw assert
         model = load_model_from_xml(xml.format(1))
-        model.set_userdata_names(['foo'])
+        model.set_userdata_names(["foo"])
         with self.assertRaises(AssertionError):
-            model.set_userdata_names(['foo', 'bar'])
+            model.set_userdata_names(["foo", "bar"])
 
 
 class TestRay(unittest.TestCase):
-    ''' Test raycasting '''
-    xml = '''
+    """Test raycasting"""
+
+    xml = """
         <mujoco>
             <worldbody>
                 <geom name="A" type="sphere" size=".1" pos="1 0 0" rgba="1 0 0 1"/>
@@ -786,10 +794,10 @@ class TestRay(unittest.TestCase):
                 </body>
             </worldbody>
         </mujoco>
-    '''
+    """
 
     def check_ray(self, sim, pnt, expected_dist, expected_geom_name, **kwargs):
-        ''' Check a single raycast returns the expected distance and geom name '''
+        """Check a single raycast returns the expected distance and geom name"""
         x = np.array([1.0, 0.0, 0.0])  # X direction
         dist, geom = sim.ray(pnt, x, **kwargs)
         self.assertAlmostEqual(dist, expected_dist)
@@ -799,53 +807,69 @@ class TestRay(unittest.TestCase):
             self.assertEqual(sim.model.geom_id2name(geom), expected_geom_name)
 
     def check_rays(self, sim, dists, names, **kwargs):
-        ''' Check a line of rays along the x axis for expected names and distances '''
+        """Check a line of rays along the x axis for expected names and distances"""
         x = np.array([1.0, 0.0, 0.0])  # X direction
         for i, (dist, name) in enumerate(zip(dists, names)):
             self.check_ray(sim, x * i, dist, name, **kwargs)
 
     def test_ray(self):
-        ''' Test raycasting and exclusions '''
+        """Test raycasting and exclusions"""
         sim = MjSim(load_model_from_xml(self.xml))
         sim.forward()
 
         # Include all geoms
-        self.check_rays(sim,
-                        [0.9, 0.1, 0.9, 0.1, 0.9, 0.1, -1.0],
-                        ['A', 'A', 'B', 'B', 'C', 'C', None])
+        self.check_rays(
+            sim,
+            [0.9, 0.1, 0.9, 0.1, 0.9, 0.1, -1.0],
+            ["A", "A", "B", "B", "C", "C", None],
+        )
 
         # Include static geoms, but exclude worldbody (which contains 'A')
-        self.check_rays(sim,
-                        [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
-                        ['B', 'B', 'B', 'B', 'C', 'C', None],
-                        exclude_body=0)
+        self.check_rays(
+            sim,
+            [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
+            ["B", "B", "B", "B", "C", "C", None],
+            exclude_body=0,
+        )
 
         # Include static geoms, and exclude body 1 (which contains 'C')
-        self.check_rays(sim,
-                        [0.9, 0.1, 0.9, 0.1, -1.0, -1.0, -1.0],
-                        ['A', 'A', 'B', 'B', None, None, None],
-                        exclude_body=1)
+        self.check_rays(
+            sim,
+            [0.9, 0.1, 0.9, 0.1, -1.0, -1.0, -1.0],
+            ["A", "A", "B", "B", None, None, None],
+            exclude_body=1,
+        )
 
         # Include static geoms, and exclude body 2 (which contains 'B')
-        self.check_rays(sim,
-                        [0.9, 0.1, 2.9, 1.9, 0.9, 0.1, -1.0],
-                        ['A', 'A', 'C', 'C', 'C', 'C', None],
-                        exclude_body=2)
+        self.check_rays(
+            sim,
+            [0.9, 0.1, 2.9, 1.9, 0.9, 0.1, -1.0],
+            ["A", "A", "C", "C", "C", "C", None],
+            exclude_body=2,
+        )
 
         # Exclude static geoms ('A' is the only static geom)
-        self.check_rays(sim,
-                        [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
-                        ['B', 'B', 'B', 'B', 'C', 'C', None],
-                        include_static_geoms=False)
+        self.check_rays(
+            sim,
+            [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
+            ["B", "B", "B", "B", "C", "C", None],
+            include_static_geoms=False,
+        )
 
         # Exclude static geoms, and exclude body 1 ('C')
-        self.check_rays(sim,
-                        [2.9, 1.9, 0.9, 0.1, -1.0, -1.0, -1.0],
-                        ['B', 'B', 'B', 'B', None, None, None],
-                        include_static_geoms=False, exclude_body=1)
+        self.check_rays(
+            sim,
+            [2.9, 1.9, 0.9, 0.1, -1.0, -1.0, -1.0],
+            ["B", "B", "B", "B", None, None, None],
+            include_static_geoms=False,
+            exclude_body=1,
+        )
 
         # Exclude static geoms, and exclude body 2 (which contains 'B')
-        self.check_rays(sim,
-                        [4.9, 3.9, 2.9, 1.9, 0.9, 0.1, -1.0],
-                        ['C', 'C', 'C', 'C', 'C', 'C', None],
-                        include_static_geoms=False, exclude_body=2)
+        self.check_rays(
+            sim,
+            [4.9, 3.9, 2.9, 1.9, 0.9, 0.1, -1.0],
+            ["C", "C", "C", "C", "C", "C", None],
+            include_static_geoms=False,
+            exclude_body=2,
+        )

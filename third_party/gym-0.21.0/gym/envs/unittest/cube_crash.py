@@ -117,9 +117,9 @@ class CubeCrash(gym.Env):
             self.hole_x - HOLE_WIDTH // 2 : self.hole_x + HOLE_WIDTH // 2 + 1,
             :,
         ] = self.bg_color
-        obs[
-            self.cube_y - 1 : self.cube_y + 2, self.cube_x - 1 : self.cube_x + 2, :
-        ] = self.cube_color
+        obs[self.cube_y - 1 : self.cube_y + 2, self.cube_x - 1 : self.cube_x + 2, :] = (
+            self.cube_color
+        )
         if self.use_black_screen and self.step_n > 4:
             obs[:] = np.zeros((3,), dtype=np.uint8)
 

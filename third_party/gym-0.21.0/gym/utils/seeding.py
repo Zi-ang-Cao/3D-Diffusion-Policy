@@ -8,7 +8,6 @@ import sys
 from gym import error
 
 
-
 def np_random(seed=None):
     if seed is not None and not (isinstance(seed, int) and 0 <= seed):
         raise error.Error(
@@ -93,9 +92,10 @@ def _int_list_from_bigint(bigint):
 
     ints = []
     while bigint > 0:
-        bigint, mod = divmod(bigint, 2 ** 32)
+        bigint, mod = divmod(bigint, 2**32)
         ints.append(mod)
     return ints
+
 
 # TODO: Remove this class and make it alias to `Generator` in a future Gym release
 # RandomNumberGenerator = np.random.Generator

@@ -7,10 +7,10 @@ from os.path import splitext
 import imagehash
 import pytest
 
-if os.getenv('MUJOCO_PY_TEST_ASSET_DIR_PATH'):
-    TEST_ASSET_DIR_PATH = os.getenv('MUJOCO_PY_TEST_ASSET_DIR_PATH')
+if os.getenv("MUJOCO_PY_TEST_ASSET_DIR_PATH"):
+    TEST_ASSET_DIR_PATH = os.getenv("MUJOCO_PY_TEST_ASSET_DIR_PATH")
 else:
-    TEST_ASSET_DIR_PATH = abspath(join(dirname(__file__), '..', 'test_imgs'))
+    TEST_ASSET_DIR_PATH = abspath(join(dirname(__file__), "..", "test_imgs"))
 
 
 def save_test_image(filename, array):
@@ -27,7 +27,7 @@ def compare_imgs(img, truth_filename, do_assert=True):
     """
     assert isinstance(truth_filename, str)
     truth_filename = join(TEST_ASSET_DIR_PATH, truth_filename)
-    if os.getenv('REGENERATE_TEST_IMAGES'):
+    if os.getenv("REGENERATE_TEST_IMAGES"):
         if exists(truth_filename):
             pre_path, ext = splitext(truth_filename)
             backup_path = "%s_old%s" % (pre_path, ext)

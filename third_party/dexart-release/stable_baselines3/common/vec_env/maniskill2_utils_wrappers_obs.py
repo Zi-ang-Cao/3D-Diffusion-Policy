@@ -6,7 +6,11 @@ import gym
 import numpy as np
 from gym import spaces
 
-from maniskill2_utils_common import (flatten_dict_keys, flatten_dict_space_keys, merge_dicts)
+from maniskill2_utils_common import (
+    flatten_dict_keys,
+    flatten_dict_space_keys,
+    merge_dicts,
+)
 
 
 class RGBDObservationWrapper(gym.ObservationWrapper):
@@ -104,7 +108,7 @@ class PointCloudObservationWrapper(gym.ObservationWrapper):
                 )
             if "Segmentation" in cam_image_space.spaces:
                 cam_pcd_space["Segmentation"] = spaces.Box(
-                    low=0, high=(2 ** 32 - 1), shape=(h * w, 4), dtype=np.uint32
+                    low=0, high=(2**32 - 1), shape=(h * w, 4), dtype=np.uint32
                 )
 
             pcd_space[cam_uid] = spaces.Dict(cam_pcd_space)

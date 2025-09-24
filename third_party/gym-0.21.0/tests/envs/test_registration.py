@@ -81,7 +81,7 @@ def test_missing_lookup():
 def test_malformed_lookup():
     registry = registration.EnvRegistry()
     try:
-        registry.spec(u"“Breakout-v0”")
+        registry.spec("“Breakout-v0”")
     except error.Error as e:
         assert "malformed environment ID" in "{}".format(
             e

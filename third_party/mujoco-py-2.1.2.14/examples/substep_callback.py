@@ -31,25 +31,29 @@ MODEL_XML = """
 </mujoco>
 """
 
-fn = '''
+fn = """
     #define SQUARE(a) (a * a)
     void fun(const mjModel* m, mjData* d) {
         for (int i = d->ne; i < d->nefc; i++) {
             pos_sum += SQUARE(d->efc_pos[i]);
         }
     }
-'''
+"""
 
-sim = MjSim(load_model_from_xml(MODEL_XML), nsubsteps=50,
-            substep_callback=fn, userdata_names=['pos_sum'])
+sim = MjSim(
+    load_model_from_xml(MODEL_XML),
+    nsubsteps=50,
+    substep_callback=fn,
+    userdata_names=["pos_sum"],
+)
 t = 0
 while t < 10:
     t += 1
-    sim.data.ctrl[0] = .2
-    print('t', t)
+    sim.data.ctrl[0] = 0.2
+    print("t", t)
     sim.step()
     # verify that there are no contacts visible between steps
-    assert sim.data.ncon == 0, 'No contacts should be detected here'
+    assert sim.data.ncon == 0, "No contacts should be detected here"
     # verify that contacts (and penetrations) are visible to substep_callback
     if t > 1:
-        assert sim.data.get_userdata('pos_sum') > 0  # detected collision
+        assert sim.data.get_userdata("pos_sum") > 0  # detected collision

@@ -30,6 +30,7 @@ and turn at the same time.
 
 Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
 """
+
 import sys
 import math
 import numpy as np

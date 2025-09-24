@@ -27,6 +27,7 @@ except ImportError:
 # from mani_skill2.envs.sapien_env import BaseEnv
 from gym import Env as BaseEnv
 
+
 def find_available_port():
     # https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number
     import socket
@@ -211,9 +212,9 @@ class VecEnv:
 
         # Allocate torch buffers
         # A list of [n_envs, n_cams, H, W, C] tensors
-        self._obs_torch_buffer: List[
-            torch.Tensor
-        ] = self.server.auto_allocate_torch_tensors(self.texture_names)
+        self._obs_torch_buffer: List[torch.Tensor] = (
+            self.server.auto_allocate_torch_tensors(self.texture_names)
+        )
         self.device = self._obs_torch_buffer[0].device
 
     # ---------------------------------------------------------------------------- #

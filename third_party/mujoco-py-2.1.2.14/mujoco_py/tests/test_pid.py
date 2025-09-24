@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 import random
-from mujoco_py import (MjSim, load_model_from_xml, cymj)
+from mujoco_py import MjSim, load_model_from_xml, cymj
 
 MODEL_XML = """
 <mujoco model="inverted pendulum">
@@ -72,17 +72,17 @@ def test_mj_pid():
 
     # Perturbation of pole to be unbalanced
     init_pos = 0.1 * (random.random() - 0.5)
-    print('init pos', init_pos)
+    print("init pos", init_pos)
     sim.data.qpos[0] = init_pos
 
     pos = 0.0
     sim.data.ctrl[0] = pos
-    print('desired position:', pos)
+    print("desired position:", pos)
 
     for _ in range(1000):
         sim.step()
 
-    print('final pos', sim.data.qpos[0])
+    print("final pos", sim.data.qpos[0])
     assert abs(sim.data.qpos[0] - pos) < 1e-4
 
 
@@ -91,11 +91,15 @@ def test_mj_proportional_only():
     Check new PID control is backward compatible with position control
     when it only has a Kp term.
     """
-    model = load_model_from_xml(MODEL_XML.format(actuator=P_ONLY_ACTUATOR, nuser_actuator=1))
+    model = load_model_from_xml(
+        MODEL_XML.format(actuator=P_ONLY_ACTUATOR, nuser_actuator=1)
+    )
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
 
-    model2 = load_model_from_xml(MODEL_XML.format(actuator=POSITION_ACTUATOR, nuser_actuator=1))
+    model2 = load_model_from_xml(
+        MODEL_XML.format(actuator=POSITION_ACTUATOR, nuser_actuator=1)
+    )
     sim2 = MjSim(model2)
 
     init_pos = 0.1 * (random.random() - 0.5)
@@ -111,7 +115,7 @@ def test_mj_proportional_only():
 
 def test_cascaded_pipi():
     """
-    To enable Cascaded control in mujoco, please refer to the setting in 
+    To enable Cascaded control in mujoco, please refer to the setting in
     the CASCADED_PIPI_ACTUATOR. user param should be set to 1
 
     Here we set Kp = 5 for the position control loop and Kp =  10 for the velocity control
@@ -126,12 +130,12 @@ def test_cascaded_pipi():
 
     # Perturbation of pole to be unbalanced
     init_pos = 0.1 * (random.random() - 1.0)
-    print('init pos', init_pos)
+    print("init pos", init_pos)
     sim.data.qpos[0] = init_pos
 
     desired_pos = 0.0
     sim.data.ctrl[0] = desired_pos
-    print('desired position:', desired_pos)
+    print("desired position:", desired_pos)
 
     max_torque = 0
 
@@ -140,19 +144,19 @@ def test_cascaded_pipi():
         if abs(sim.data.actuator_force[0]) > max_torque:
             max_torque = abs(sim.data.actuator_force[0])
 
-    print('final pos', sim.data.qpos[0])
+    print("final pos", sim.data.qpos[0])
     assert abs(sim.data.qpos[0] - desired_pos) < 1e-3
     assert max_torque <= 3  # Torque limit set on the actuator
 
 
 def test_cascaded_pdpi():
     """
-    This tests using a PD-PI loop with the cascaded controller. This is achieved by setting the 
+    This tests using a PD-PI loop with the cascaded controller. This is achieved by setting the
     integral time constant and clamp equal to zero.
 
-    Here we setup two sims (CASCADED_PDPI_ACTUATOR and CASCADED_PDPI_ACTUATOR_NO_D), one with 
-    derivative gain and one without. With the exception of the derivative term, all other gain 
-    parameters are the same. The goal is to show the stability added by the derivative term. 
+    Here we setup two sims (CASCADED_PDPI_ACTUATOR and CASCADED_PDPI_ACTUATOR_NO_D), one with
+    derivative gain and one without. With the exception of the derivative term, all other gain
+    parameters are the same. The goal is to show the stability added by the derivative term.
     """
     random.seed(30)
     xml = MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR, nuser_actuator=1)
@@ -172,12 +176,12 @@ def test_cascaded_pdpi():
 
     # Perturbation of pole to be unbalanced
     init_pos = 0.1 * (random.random() - 1.0)
-    print('init pos', init_pos)
+    print("init pos", init_pos)
     sim.data.qpos[0] = sim2.data.qpos[0] = init_pos
 
     desired_pos = 0.0
     sim.data.ctrl[0] = sim2.data.ctrl[0] = desired_pos
-    print('desired position:', desired_pos)
+    print("desired position:", desired_pos)
 
     max_torque = 0
 
@@ -187,8 +191,10 @@ def test_cascaded_pdpi():
         if abs(sim.data.actuator_force[0]) > max_torque:
             max_torque = abs(sim.data.actuator_force[0])
 
-    print('final pos', sim.data.qpos[0])
-    assert abs(sim2.data.qpos[0] - desired_pos) > 1e-3  # Verify instability without D term
+    print("final pos", sim.data.qpos[0])
+    assert (
+        abs(sim2.data.qpos[0] - desired_pos) > 1e-3
+    )  # Verify instability without D term
     assert abs(sim.data.qpos[0] - desired_pos) < 1e-3  # Verify stability with D term
     assert max_torque <= 3  # Torque limit set on the actuator
 
@@ -213,17 +219,24 @@ def test_warm_start_ema():
     start.
     """
     # Load model with EMA smoothing (0.97)
-    model = load_model_from_xml(MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR, nuser_actuator=1))
+    model = load_model_from_xml(
+        MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR, nuser_actuator=1)
+    )
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
     # Load model without EMA smoothing (0.0)
-    model2 = load_model_from_xml(MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR_NO_EMA, nuser_actuator=1))
+    model2 = load_model_from_xml(
+        MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR_NO_EMA, nuser_actuator=1)
+    )
     sim2 = MjSim(model2)
     cymj.set_pid_control(sim2.model, sim2.data)
     init_pos = 0.1 * (random.random() - 0.5)
-    sim.data.ctrl[0] = sim2.data.ctrl[0] = .2
+    sim.data.ctrl[0] = sim2.data.ctrl[0] = 0.2
     sim.step()
     sim2.step()
     EMA_SMOOTH_IDX = 4
     # Compare that the saved smoothed position is the same for both EMA=.97 and EMA=0
-    assert abs(sim.data.userdata[EMA_SMOOTH_IDX] - sim2.data.userdata[EMA_SMOOTH_IDX]) < 1e-10
+    assert (
+        abs(sim.data.userdata[EMA_SMOOTH_IDX] - sim2.data.userdata[EMA_SMOOTH_IDX])
+        < 1e-10
+    )

@@ -14,10 +14,10 @@ class EnvSpec(object):
 
 
 class GymEnv(object):
-    def __init__(self, env, env_kwargs=None,
-                 obs_mask=None, act_repeat=1, 
-                 *args, **kwargs):
-    
+    def __init__(
+        self, env, env_kwargs=None, obs_mask=None, act_repeat=1, *args, **kwargs
+    ):
+
         # get the correct env behavior
         if type(env) == str:
             env = gym.make(env)
@@ -92,14 +92,15 @@ class GymEnv(object):
 
     def step(self, action):
         action = action.clip(self.action_space.low, self.action_space.high)
-        if self.act_repeat == 1: 
+        if self.act_repeat == 1:
             obs, cum_reward, done, ifo = self.env.step(action)
         else:
             cum_reward = 0.0
             for i in range(self.act_repeat):
                 obs, reward, done, ifo = self.env.step(action)
                 cum_reward += reward
-                if done: break
+                if done:
+                    break
         return self.obs_mask * obs, cum_reward, done, ifo
 
     def render(self):
@@ -151,7 +152,9 @@ class GymEnv(object):
 
     # ===========================================
 
-    def visualize_policy(self, policy, horizon=1000, num_episodes=1, mode='exploration'):
+    def visualize_policy(
+        self, policy, horizon=1000, num_episodes=1, mode="exploration"
+    ):
         try:
             self.env.env.visualize_policy(policy, horizon, num_episodes, mode)
         except:
@@ -161,24 +164,31 @@ class GymEnv(object):
                 t = 0
                 score = 0.0
                 while t < horizon and d is False:
-                    a = policy.get_action(o)[0] if mode == 'exploration' else policy.get_action(o)[1]['evaluation']
+                    a = (
+                        policy.get_action(o)[0]
+                        if mode == "exploration"
+                        else policy.get_action(o)[1]["evaluation"]
+                    )
                     o, r, d, _ = self.step(a)
                     score = score + r
                     self.render()
-                    t = t+1
+                    t = t + 1
                 print("Episode score = %f" % score)
 
-    def evaluate_policy(self, policy,
-                        num_episodes=5,
-                        horizon=None,
-                        gamma=1,
-                        visual=False,
-                        percentile=[],
-                        get_full_dist=False,
-                        mean_action=False,
-                        init_env_state=None,
-                        terminate_at_done=True,
-                        seed=123):
+    def evaluate_policy(
+        self,
+        policy,
+        num_episodes=5,
+        horizon=None,
+        gamma=1,
+        visual=False,
+        percentile=[],
+        get_full_dist=False,
+        mean_action=False,
+        init_env_state=None,
+        terminate_at_done=True,
+        seed=123,
+    ):
 
         self.set_seed(seed)
         horizon = self._horizon if horizon is None else horizon
@@ -193,9 +203,13 @@ class GymEnv(object):
             while t < horizon and (done == False or terminate_at_done == False):
                 self.render() if visual is True else None
                 o = self.get_obs()
-                a = policy.get_action(o)[1]['evaluation'] if mean_action is True else policy.get_action(o)[0]
+                a = (
+                    policy.get_action(o)[1]["evaluation"]
+                    if mean_action is True
+                    else policy.get_action(o)[0]
+                )
                 o, r, done, _ = self.step(a)
-                ep_returns[ep] += (gamma ** t) * r
+                ep_returns[ep] += (gamma**t) * r
                 t += 1
 
         mean_eval, std = np.mean(ep_returns), np.std(ep_returns)

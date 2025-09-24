@@ -21,39 +21,73 @@ class ArmRobotInfo(NamedTuple):
 
 
 def generate_free_robot_hand_info() -> Dict[str, FreeRobotInfo]:
-    shadow_hand_free_info = FreeRobotInfo(path="robot/shadow_hand_description/shadowhand_free.urdf", dof=28,
-                                          palm_name="palm_center")
-    adroit_hand_free_info = FreeRobotInfo(path="robot/adroit_hand_free.urdf", dof=28, palm_name="palm")
-    allegro_hand_free_info = FreeRobotInfo(path="robot/allegro_hand_description/allegro_hand_free.urdf", dof=22,
-                                           palm_name="palm_center")
-    svh_hand_free_info = FreeRobotInfo(path="robot/svh_hand_right.urdf", dof=26, palm_name="right_hand_e1")
-    mano_hand_free_info = FreeRobotInfo(path="robot/mano_hand_free.urdf", dof=51, palm_name="palm")
-    panda_hand_free_info = FreeRobotInfo(path="robot/panda_hand_free.urdf", dof=8, palm_name="panda_hand")
+    shadow_hand_free_info = FreeRobotInfo(
+        path="robot/shadow_hand_description/shadowhand_free.urdf",
+        dof=28,
+        palm_name="palm_center",
+    )
+    adroit_hand_free_info = FreeRobotInfo(
+        path="robot/adroit_hand_free.urdf", dof=28, palm_name="palm"
+    )
+    allegro_hand_free_info = FreeRobotInfo(
+        path="robot/allegro_hand_description/allegro_hand_free.urdf",
+        dof=22,
+        palm_name="palm_center",
+    )
+    svh_hand_free_info = FreeRobotInfo(
+        path="robot/svh_hand_right.urdf", dof=26, palm_name="right_hand_e1"
+    )
+    mano_hand_free_info = FreeRobotInfo(
+        path="robot/mano_hand_free.urdf", dof=51, palm_name="palm"
+    )
+    panda_hand_free_info = FreeRobotInfo(
+        path="robot/panda_hand_free.urdf", dof=8, palm_name="panda_hand"
+    )
 
-    info_dict = dict(shadow_hand_free=shadow_hand_free_info,
-                     allegro_hand_free=allegro_hand_free_info,
-                     svh_hand_free=svh_hand_free_info,
-                     mano_hand_free=mano_hand_free_info,
-                     panda_hand_free=panda_hand_free_info,
-                     adroit_hand_free=adroit_hand_free_info)
+    info_dict = dict(
+        shadow_hand_free=shadow_hand_free_info,
+        allegro_hand_free=allegro_hand_free_info,
+        svh_hand_free=svh_hand_free_info,
+        mano_hand_free=mano_hand_free_info,
+        panda_hand_free=panda_hand_free_info,
+        adroit_hand_free=adroit_hand_free_info,
+    )
     return info_dict
 
 
 def generate_arm_robot_hand_info() -> Dict[str, ArmRobotInfo]:
     xarm_path = Path("robot/xarm6_description/")
-    shadow_hand_xarm6 = ArmRobotInfo(path=str(xarm_path / "xarm6_shadow.urdf"), hand_dof=22, arm_dof=6,
-                                     palm_name="palm_center", arm_init_qpos=[0, 0, 0, 0, -np.pi / 2, 0])
-    allegro_hand_xarm6 = ArmRobotInfo(path=str(xarm_path / "xarm6_allegro.urdf"), hand_dof=16, arm_dof=6,
-                                      palm_name="palm_center", arm_init_qpos=[0, 0, 0, 0, -np.pi / 2, 0],
-                                      root_offset=[-0.0244, 0, 0])
+    shadow_hand_xarm6 = ArmRobotInfo(
+        path=str(xarm_path / "xarm6_shadow.urdf"),
+        hand_dof=22,
+        arm_dof=6,
+        palm_name="palm_center",
+        arm_init_qpos=[0, 0, 0, 0, -np.pi / 2, 0],
+    )
+    allegro_hand_xarm6 = ArmRobotInfo(
+        path=str(xarm_path / "xarm6_allegro.urdf"),
+        hand_dof=16,
+        arm_dof=6,
+        palm_name="palm_center",
+        arm_init_qpos=[0, 0, 0, 0, -np.pi / 2, 0],
+        root_offset=[-0.0244, 0, 0],
+    )
     allegro_hand_xarm6_wrist_mounted_face_down = ArmRobotInfo(
         path="robot/xarm6_description/xarm6_allegro_wrist_mounted_rotate.urdf",
-        hand_dof=16, arm_dof=6, palm_name="palm_center", arm_init_qpos=[0, 0, 0, 0, 0, -np.pi / 2],
-        root_offset=[0.00, 0, 0])
+        hand_dof=16,
+        arm_dof=6,
+        palm_name="palm_center",
+        arm_init_qpos=[0, 0, 0, 0, 0, -np.pi / 2],
+        root_offset=[0.00, 0, 0],
+    )
     allegro_hand_xarm6_wrist_mounted_face_front = ArmRobotInfo(
         path="robot/xarm6_description/xarm6_allegro_wrist_mounted_rotate.urdf",
-        hand_dof=16, arm_dof=6, palm_name="palm_center", arm_init_qpos=[0, 0, 0, np.pi, np.pi / 2, np.pi],
-        root_offset=[0.00, 0, 0])
+        hand_dof=16,
+        arm_dof=6,
+        palm_name="palm_center",
+        arm_init_qpos=[0, 0, 0, np.pi, np.pi / 2, np.pi],
+        root_offset=[0.00, 0, 0],
+    )
     info_dict = dict(
         shadow_hand_xarm6=shadow_hand_xarm6,
         allegro_hand_xarm6=allegro_hand_xarm6,
@@ -69,8 +103,17 @@ def generate_retargeting_link_names(robot_name):
         link_names += ["thmiddle", "ffmiddle", "mfmiddle", "rfmiddle", "lfmiddle"]
         link_hand_indices = [0, 4, 8, 12, 16, 20] + [2, 6, 10, 14, 18]
     elif "allegro_hand" in robot_name:
-        link_names = ["palm", "link_15.0_tip", "link_3.0_tip", "link_7.0_tip", "link_11.0_tip", "link_14.0", "link_2.0",
-                      "link_6.0", "link_10.0"]
+        link_names = [
+            "palm",
+            "link_15.0_tip",
+            "link_3.0_tip",
+            "link_7.0_tip",
+            "link_11.0_tip",
+            "link_14.0",
+            "link_2.0",
+            "link_6.0",
+            "link_10.0",
+        ]
         link_hand_indices = [0, 4, 8, 12, 16] + [2, 6, 10, 14]
     else:
         raise NotImplementedError
@@ -89,7 +132,9 @@ def wrap_link_hand_indices(link_hand_indices, method="tip_middle"):
     return result
 
 
-def load_robot(scene: sapien.Scene, robot_name, disable_self_collision=True) -> sapien.Articulation:
+def load_robot(
+    scene: sapien.Scene, robot_name, disable_self_collision=True
+) -> sapien.Articulation:
     loader = scene.create_urdf_loader()
     current_dir = Path(__file__).parent
     package_dir = (current_dir.parent.parent / "assets").resolve()
@@ -106,13 +151,21 @@ def load_robot(scene: sapien.Scene, robot_name, disable_self_collision=True) -> 
     else:
         if "allegro" in robot_name:
             for link_builder in robot_builder.get_link_builders():
-                if link_builder.get_name() in ["link_9.0", "link_5.0", "link_1.0", "link_13.0", "base_link"]:
+                if link_builder.get_name() in [
+                    "link_9.0",
+                    "link_5.0",
+                    "link_1.0",
+                    "link_13.0",
+                    "base_link",
+                ]:
                     link_builder.set_collision_groups(1, 1, 17, 0)
     robot = robot_builder.build(fix_root_link=True)
     robot.set_name(robot_name)
 
     # robot_arm_control_params = np.array([0, 300, 300])
-    robot_arm_control_params = np.array([200000, 40000, 500])  # This PD is far larger than real to improve stability
+    robot_arm_control_params = np.array(
+        [200000, 40000, 500]
+    )  # This PD is far larger than real to improve stability
     root_translation_control_params = np.array([0, 200, 200])
     root_rotation_control_params = np.array([0, 50, 50])
     finger_control_params = np.array([200, 60, 10])
@@ -120,9 +173,17 @@ def load_robot(scene: sapien.Scene, robot_name, disable_self_collision=True) -> 
         for joint in robot.get_active_joints():
             name = joint.get_name()
             if "x_joint" in name or "y_joint" in name or "z_joint" in name:
-                joint.set_drive_property(*(1 * root_translation_control_params), mode="force")
-            elif "x_rotation_joint" in name or "y_rotation_joint" in name or "z_rotation_joint" in name:
-                joint.set_drive_property(*(1 * root_rotation_control_params), mode="force")
+                joint.set_drive_property(
+                    *(1 * root_translation_control_params), mode="force"
+                )
+            elif (
+                "x_rotation_joint" in name
+                or "y_rotation_joint" in name
+                or "z_rotation_joint" in name
+            ):
+                joint.set_drive_property(
+                    *(1 * root_rotation_control_params), mode="force"
+                )
             else:
                 joint.set_drive_property(*(1 * finger_control_params), mode="force")
     elif "xarm" in robot_name:
@@ -161,23 +222,31 @@ def modify_robot_visual(robot: sapien.Articulation):
                     mat_viz.set_specular(0.07)
                     mat_viz.set_metallic(0.3)
                     mat_viz.set_roughness(0.2)
-                    if 'adroit' in robot_name:
+                    if "adroit" in robot_name:
                         mat_viz.set_specular(0.02)
                         mat_viz.set_metallic(0.1)
-                        mat_viz.set_base_color(np.power(np.array([0.9, 0.7, 0.5, 1]), 1.5))
-                    elif 'allegro' in robot_name:
+                        mat_viz.set_base_color(
+                            np.power(np.array([0.9, 0.7, 0.5, 1]), 1.5)
+                        )
+                    elif "allegro" in robot_name:
                         if "tip" not in link.get_name():
                             mat_viz.set_specular(0.5)
                             mat_viz.set_base_color(np.array([0.2, 0.2, 0.2, 1]))
                         else:
                             mat_viz.set_base_color(np.array([0.9, 0.9, 0.9, 1]))
-                    elif 'svh' in robot_name:
-                        link_names = ["right_hand_c", "right_hand_t", "right_hand_s", "right_hand_r", "right_hand_q",
-                                      "right_hand_e1"]
+                    elif "svh" in robot_name:
+                        link_names = [
+                            "right_hand_c",
+                            "right_hand_t",
+                            "right_hand_s",
+                            "right_hand_r",
+                            "right_hand_q",
+                            "right_hand_e1",
+                        ]
                         if link.get_name() not in link_names:
                             mat_viz.set_specular(0.02)
                             mat_viz.set_metallic(0.1)
-                    elif 'ar10' in robot_name:
+                    elif "ar10" in robot_name:
                         if "tip" in link.get_name():
                             mat_viz.set_base_color(np.array([20, 20, 20, 255]) / 255)
                             mat_viz.set_metallic(0)
@@ -196,7 +265,7 @@ class LPFilter:
         dt = 1 / control_freq
         wc = cutoff_freq * 2 * np.pi
         y_cos = 1 - np.cos(wc * dt)
-        self.alpha = -y_cos + np.sqrt(y_cos ** 2 + 2 * y_cos)
+        self.alpha = -y_cos + np.sqrt(y_cos**2 + 2 * y_cos)
         self.y = 0
         self.is_init = False
 
@@ -228,9 +297,9 @@ class PIDController:
             self._prev_err = err
 
         value = (
-                self.kp * err
-                + self.kd * (err - self._prev_err) / self.dt
-                + self.ki * self._cum_err
+            self.kp * err
+            + self.kd * (err - self._prev_err) / self.dt
+            + self.ki * self._cum_err
         )
 
         self._prev_err = err

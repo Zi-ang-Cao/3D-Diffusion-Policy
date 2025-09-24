@@ -15,6 +15,7 @@ def fetch_texture(cam: sapien.CameraEntity, texture_name: str, return_torch=Fals
         return output_array
     else:
         import torch
+
         return torch.from_dlpack(dlpack)
 
 
@@ -40,14 +41,14 @@ def generate_imagination_pc_from_obs(obs: Dict[str, np.ndarray]):
             pc.append(value[:, :3])
             color.append(np.tile(np.array([0, 128, 128]), [num_points, 1]))
             category.append([3] * num_points)
-        elif 'pc_seg' in key:  # e.g.  key: 'faucet_1-pc_seg'
+        elif "pc_seg" in key:  # e.g.  key: 'faucet_1-pc_seg'
             group_num = value.shape[1] - 3  # 7-3=4
             assert group_num == 4
             colors = [  # might not have been used.
                 np.array([0, 0, 255]),
                 np.array([255, 0, 0]),
                 np.array([0, 255, 0]),
-                np.array([0, 128, 128])
+                np.array([0, 128, 128]),
             ]
             for i in range(group_num):
                 seg_idx = np.argmax(value[..., 3:], axis=1)

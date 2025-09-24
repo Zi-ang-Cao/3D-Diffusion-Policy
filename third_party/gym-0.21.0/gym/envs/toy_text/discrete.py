@@ -15,7 +15,6 @@ def categorical_sample(prob_n, np_random):
 
 
 class DiscreteEnv(Env):
-
     """
     Has the following members
     - nS: number of states

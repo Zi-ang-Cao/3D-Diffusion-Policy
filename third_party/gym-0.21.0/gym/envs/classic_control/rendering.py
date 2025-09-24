@@ -1,6 +1,7 @@
 """
 2D rendering framework
 """
+
 import os
 import sys
 

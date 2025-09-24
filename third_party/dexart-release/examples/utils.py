@@ -4,17 +4,40 @@ import numpy as np
 from dexart.env.task_setting import ROBUSTNESS_INIT_CAMERA_CONFIG
 import open3d as o3d
 
+
 def visualize_observation(obs, use_seg=False, img_type=None):
     def visualize_pc_with_seg_label(cloud):
         pc = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(cloud[:, :3]))
 
         def map(feature):
             color = np.zeros((feature.shape[0], 3))
-            COLOR20 = np.array(
-                [[230, 25, 75], [60, 180, 75], [255, 225, 25], [0, 130, 200], [245, 130, 48],
-                 [145, 30, 180], [70, 240, 240], [240, 50, 230], [210, 245, 60], [250, 190, 190],
-                 [0, 128, 128], [230, 190, 255], [170, 110, 40], [255, 250, 200], [128, 0, 0],
-                 [170, 255, 195], [128, 128, 0], [255, 215, 180], [0, 0, 128], [128, 128, 128]]) / 255
+            COLOR20 = (
+                np.array(
+                    [
+                        [230, 25, 75],
+                        [60, 180, 75],
+                        [255, 225, 25],
+                        [0, 130, 200],
+                        [245, 130, 48],
+                        [145, 30, 180],
+                        [70, 240, 240],
+                        [240, 50, 230],
+                        [210, 245, 60],
+                        [250, 190, 190],
+                        [0, 128, 128],
+                        [230, 190, 255],
+                        [170, 110, 40],
+                        [255, 250, 200],
+                        [128, 0, 0],
+                        [170, 255, 195],
+                        [128, 128, 0],
+                        [255, 215, 180],
+                        [0, 0, 128],
+                        [128, 128, 128],
+                    ]
+                )
+                / 255
+            )
             for i in range(feature.shape[0]):
                 for j in range(feature.shape[1]):
                     if feature[i, j] == 1:
@@ -39,11 +62,11 @@ def visualize_observation(obs, use_seg=False, img_type=None):
 
 
 def get_viewpoint_camera_parameter():
-    robustness_init_camera_config = ROBUSTNESS_INIT_CAMERA_CONFIG['laptop']
-    r = robustness_init_camera_config['r']
-    phi = robustness_init_camera_config['phi']
-    theta = robustness_init_camera_config['theta']
-    center = robustness_init_camera_config['center']
+    robustness_init_camera_config = ROBUSTNESS_INIT_CAMERA_CONFIG["laptop"]
+    r = robustness_init_camera_config["r"]
+    phi = robustness_init_camera_config["phi"]
+    theta = robustness_init_camera_config["theta"]
+    center = robustness_init_camera_config["center"]
 
     x0, y0, z0 = center
     # phi in [0, pi/2]

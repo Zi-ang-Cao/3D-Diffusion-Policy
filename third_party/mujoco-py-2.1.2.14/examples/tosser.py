@@ -24,5 +24,5 @@ while True:
         sim.step()
         viewer.render()
 
-    if os.getenv('TESTING') is not None:
+    if os.getenv("TESTING") is not None:
         break

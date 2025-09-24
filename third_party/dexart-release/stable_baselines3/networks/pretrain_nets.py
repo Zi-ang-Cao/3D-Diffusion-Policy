@@ -7,7 +7,7 @@ class PointNet(nn.Module):  # actually pointnet
         # NOTE: we require the output dim to be 256, in order to match the pretrained weights
         super(PointNet, self).__init__()
 
-        print(f'PointNetSmall')
+        print(f"PointNetSmall")
 
         in_channel = point_channel
         mlp_out_dim = 256
@@ -21,14 +21,14 @@ class PointNet(nn.Module):  # actually pointnet
     def reset_parameters_(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.trunc_normal_(m.weight, std=.02)
+                nn.init.trunc_normal_(m.weight, std=0.02)
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        '''
+        """
         x: [B, N, 3]
-        '''
+        """
         # pc = x[0].cpu().detach().numpy()
         # Local
         x = self.local_mlp(x)
@@ -42,7 +42,7 @@ class PointNetMedium(nn.Module):  # actually pointnet
         # NOTE: we require the output dim to be 256, in order to match the pretrained weights
         super(PointNetMedium, self).__init__()
 
-        print(f'PointNetMedium')
+        print(f"PointNetMedium")
 
         in_channel = point_channel
         mlp_out_dim = 256
@@ -60,14 +60,14 @@ class PointNetMedium(nn.Module):  # actually pointnet
     def reset_parameters_(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.trunc_normal_(m.weight, std=.02)
+                nn.init.trunc_normal_(m.weight, std=0.02)
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        '''
+        """
         x: [B, N, 3]
-        '''
+        """
         # Local
         x = self.local_mlp(x)
         # gloabal max pooling
@@ -80,7 +80,7 @@ class PointNetLarge(nn.Module):  # actually pointnet
         # NOTE: we require the output dim to be 256, in order to match the pretrained weights
         super(PointNetLarge, self).__init__()
 
-        print(f'PointNetLarge')
+        print(f"PointNetLarge")
 
         in_channel = point_channel
         mlp_out_dim = 256
@@ -103,14 +103,14 @@ class PointNetLarge(nn.Module):  # actually pointnet
     def reset_parameters_(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.trunc_normal_(m.weight, std=.02)
+                nn.init.trunc_normal_(m.weight, std=0.02)
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        '''
+        """
         x: [B, N, 3]
-        '''
+        """
         # Local
         x = self.local_mlp(x)
         # gloabal max pooling
