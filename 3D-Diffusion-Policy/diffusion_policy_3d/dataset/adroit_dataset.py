@@ -2,6 +2,9 @@ from typing import Dict
 import torch
 import numpy as np
 import copy
+import os
+import sys
+from hydra.utils import get_original_cwd
 from diffusion_policy_3d.common.pytorch_util import dict_apply
 from diffusion_policy_3d.common.replay_buffer import ReplayBuffer
 from diffusion_policy_3d.common.sampler import (
@@ -22,6 +25,13 @@ class AdroitDataset(BaseDataset):
             ):
         super().__init__()
         self.task_name = task_name
+
+        if not os.path.isabs(zarr_path):
+            if sys.version_info >= (3, 10):
+                zarr_path = os.path.join(get_original_cwd(), "3D-Diffusion-Policy", zarr_path)
+            else:
+                zarr_path = os.path.join(get_original_cwd(), zarr_path)
+
         self.replay_buffer = ReplayBuffer.copy_from_path(
             zarr_path, keys=['state', 'action', 'point_cloud', 'img'])
         val_mask = get_val_mask(
